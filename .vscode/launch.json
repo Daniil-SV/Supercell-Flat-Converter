@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Encode",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": ["encode"],
+            "console": "integratedTerminal",
+        },
+        {
+            "name": "Decode",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": ["decode"],
+            "console": "integratedTerminal",
+        }
+    ]
+}

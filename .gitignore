@@ -1,0 +1,7 @@
+*.pyc
+
+In-SC-glTF
+Out-SC-glTF
+In-glTF
+Out-glTF
+Out-Debug
