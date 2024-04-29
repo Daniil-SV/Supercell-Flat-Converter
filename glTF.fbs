@@ -220,7 +220,7 @@ table AnimationChannel {
 
 /// "description": "Interpolation algorithm."
 /// "gltf_detailedDescription": "Interpolation algorithm."
-enum AnimationSamplerInterpolationAlgorithm: short { // string
+enum AnimationSamplerInterpolationAlgorithm: byte { // string
 	/// "description": "The animated values are linearly interpolated between keyframes. When targeting a rotation, spherical linear interpolation (slerp) should be used to interpolate quaternions. The number output of elements must equal the number of input elements."
 	LINEAR,
 	/// "description": "The animated values remain constant to the output of the first keyframe, until the next keyframe. The number of output elements must equal the number of input elements."
@@ -234,11 +234,12 @@ enum AnimationSamplerInterpolationAlgorithm: short { // string
 /// Animation Sampler
 /// "description": "Combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target)."
 table AnimationSampler {
-	/// Dictionary object with extension-specific objects.
-	extensions: [ubyte](flexbuffer);
 
 	/// Application-specific data.
 	extras: [ubyte](flexbuffer);
+
+	/// Dictionary object with extension-specific objects.
+	extensions: [ubyte](flexbuffer);
 
 	/// "description": "The index of an accessor containing keyframe input values, e.g., time."
 	/// "gltf_detailedDescription": "The index of an accessor containing keyframe input values, e.g., time. That accessor must have componentType `FLOAT`. The values represent time in seconds with `time[0] >= 0.0`, and strictly increasing values, i.e., `time[n + 1] > time[n]`."
@@ -248,6 +249,7 @@ table AnimationSampler {
 	/// "description": "Interpolation algorithm."
 	/// "gltf_detailedDescription": "Interpolation algorithm."
 	interpolation: AnimationSamplerInterpolationAlgorithm = LINEAR;
+	// 10 OK
 
 	/// "description": "The index of an accessor, containing keyframe output values."
 	/// "gltf_detailedDescription": "The index of an accessor containing keyframe output values. When targeting TRS target, the `accessor.componentType` of the output values must be `FLOAT`. When targeting morph weights, the `accessor.componentType` of the output values must be `FLOAT` or normalized integer where each output element stores values with a count equal to the number of morph targets."
