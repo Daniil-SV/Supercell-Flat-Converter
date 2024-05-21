@@ -2,7 +2,7 @@ import os
 import argparse
 from lib.glTF import glTF
 
-debug = False
+debug = True
 
 required_folders = {
     "sc_input": "In-SC-glTF",

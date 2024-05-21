@@ -1,6 +1,20 @@
 from binary_reader import BinaryReader
 from .flatbuffer import serialize_glb_json, deserialize_glb_json
-import json
+from json import JSONEncoder, dumps, loads
+import math
+
+def ProcessObjectJSON(obj):
+    if isinstance(obj, dict):
+        return {k:ProcessObjectJSON(v) for k,v in obj.items()}
+    elif isinstance(obj, list):
+        return [ProcessObjectJSON(v) for v in obj]
+    elif isinstance(obj, float) and math.isnan(obj):
+        return 0.0
+    return obj
+
+class ObjectProcessor(JSONEncoder):
+    def encode(self, obj, *args, **kwargs):
+        return super().encode(ProcessObjectJSON(obj), *args, **kwargs)
 
 class glTF_Chunk:
     def __init__(self, name: str, data: bytes) -> None:
@@ -19,7 +33,7 @@ class glTF_Chunk:
         if (self.name != "FLA2"): return
         
         self.data = bytes(
-            json.dumps(deserialize_glb_json(self.data), allow_nan=False, separators=(',', ':')),
+            dumps(deserialize_glb_json(self.data), separators=(',', ':'), cls=ObjectProcessor),
             "utf8"
         )
         self.name = "JSON"

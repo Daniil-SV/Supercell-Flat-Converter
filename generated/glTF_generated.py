@@ -1171,38 +1171,10 @@ class AnimationSampler(object):
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
 
-    # Dictionary object with extension-specific objects.
-    # AnimationSampler
-    def Extensions(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
-        if o != 0:
-            a = self._tab.Vector(o)
-            return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
-        return 0
-
-    # AnimationSampler
-    def ExtensionsAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
-        if o != 0:
-            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
-        return 0
-
-    # AnimationSampler
-    def ExtensionsLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
-        if o != 0:
-            return self._tab.VectorLen(o)
-        return 0
-
-    # AnimationSampler
-    def ExtensionsIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
-        return o == 0
-
     # Application-specific data.
     # AnimationSampler
     def Extras(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
@@ -1210,20 +1182,48 @@ class AnimationSampler(object):
 
     # AnimationSampler
     def ExtrasAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         if o != 0:
             return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
         return 0
 
     # AnimationSampler
     def ExtrasLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # AnimationSampler
     def ExtrasIsNone(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+        return o == 0
+
+    # Dictionary object with extension-specific objects.
+    # AnimationSampler
+    def Extensions(self, j):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
+        if o != 0:
+            a = self._tab.Vector(o)
+            return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
+        return 0
+
+    # AnimationSampler
+    def ExtensionsAsNumpy(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
+        if o != 0:
+            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
+        return 0
+
+    # AnimationSampler
+    def ExtensionsLength(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
+        if o != 0:
+            return self._tab.VectorLen(o)
+        return 0
+
+    # AnimationSampler
+    def ExtensionsIsNone(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         return o == 0
 
@@ -1242,7 +1242,7 @@ class AnimationSampler(object):
     def Interpolation(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
-            return self._tab.Get(flatbuffers.number_types.Int16Flags, o + self._tab.Pos)
+            return self._tab.Get(flatbuffers.number_types.Int8Flags, o + self._tab.Pos)
         return 0
 
     # "description": "The index of an accessor, containing keyframe output values."
@@ -1257,23 +1257,23 @@ class AnimationSampler(object):
 def AnimationSamplerStart(builder):
     builder.StartObject(5)
 
-def AnimationSamplerAddExtensions(builder, extensions):
-    builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(extensions), 0)
-
-def AnimationSamplerStartExtensionsVector(builder, numElems):
-    return builder.StartVector(1, numElems, 1)
-
 def AnimationSamplerAddExtras(builder, extras):
-    builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(extras), 0)
+    builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(extras), 0)
 
 def AnimationSamplerStartExtrasVector(builder, numElems):
+    return builder.StartVector(1, numElems, 1)
+
+def AnimationSamplerAddExtensions(builder, extensions):
+    builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(extensions), 0)
+
+def AnimationSamplerStartExtensionsVector(builder, numElems):
     return builder.StartVector(1, numElems, 1)
 
 def AnimationSamplerAddInput(builder, input):
     builder.PrependInt32Slot(2, input, 0)
 
 def AnimationSamplerAddInterpolation(builder, interpolation):
-    builder.PrependInt16Slot(3, interpolation, 0)
+    builder.PrependInt8Slot(3, interpolation, 0)
 
 def AnimationSamplerAddOutput(builder, output):
     builder.PrependInt32Slot(4, output, 0)
