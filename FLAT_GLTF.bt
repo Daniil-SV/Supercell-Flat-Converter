@@ -1,0 +1,660 @@
+//------------------------------------------------
+//--- 010 Editor v14.0 Binary Template
+//
+//      File: 
+//   Authors: DaniilSV
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+//////////////////////////////////////////////////
+
+typedef struct (int valueOffset)
+{
+    local uint position = FTell();
+    
+    FSeek(valueOffset);
+    uint vtableOffset;
+    local uint value = vtableOffset + valueOffset;
+    
+    FSeek(position);
+} Indirect;
+
+typedef struct (uint tableOffset, int valueOffset)
+{
+    local uint position = FTell();
+    FSeek(tableOffset);
+    int vtableOffset;
+    local uint vtable = tableOffset - vtableOffset;
+    FSeek(vtable);
+    uint16 vtableSize;
+    uint16 vtableDataSize;
+    if (valueOffset < vtableSize)
+    {
+        FSeek(vtable + valueOffset);
+        uint16 value;  
+    } else 
+    {
+        local uint16 value = 0; 
+    }
+        
+    FSeek(position);
+} VTableOffset <read=VTableValueRead, bgcolor = 0xFFFFFF>;
+
+string VTableValueRead(VTableOffset &v) {
+    local string s;
+    SPrintf(s, "%d", v.value);
+    return s;
+};
+
+typedef struct (uint tableOffset, int valueOffset, int defaultValue)
+{
+    local uint position = FTell();
+    
+    VTableOffset vtable(tableOffset, valueOffset);
+    if (vtable.value == 0)
+    {
+        local int value = defaultValue;    
+    } else 
+    {
+        FSeek(tableOffset + vtable.value);
+        int value;
+    }
+    
+    FSeek(position);
+    
+} Integer <read=IntegerRead, bgcolor = 0x0000FF>;
+
+string IntegerRead(Integer &v) {
+    local string s;
+    SPrintf(s, "%d", v.value);
+    return s;
+};
+
+typedef struct (uint tableOffset, int valueOffset, ubyte defaultValue)
+{
+    local uint position = FTell();
+    
+    VTableOffset vtable(tableOffset, valueOffset);
+    if (vtable.value == 0)
+    {
+        local ubyte value = defaultValue;    
+    } else 
+    {
+        FSeek(tableOffset + vtable.value);
+        ubyte value;
+    }
+    
+    FSeek(position);
+    
+} Byte <read=ByteRead, bgcolor = 0x0000FF>;
+
+
+string ByteRead(Byte &v) {
+    local string s;
+    SPrintf(s, "%d", v.value);
+    return s;
+};
+
+typedef struct (int valueOffset)
+{
+    local uint position = FTell();
+    
+    FSeek(valueOffset);
+    
+    uint structStart;
+    valueOffset += structStart;
+    FSeek(valueOffset);
+    
+    uint32 length;
+    char data[length];
+    
+    FSeek(position);
+} StringImpl <read = StringImplRead, bgcolor = 0x00FF00>;
+
+typedef struct (uint tableOffset, int valueOffset)
+{
+    local uint position = FTell();
+    
+    VTableOffset vtable(tableOffset, valueOffset);
+    if (vtable.value == 0) 
+    {
+        return;  
+    };
+    
+    local uint dataOffset = tableOffset + vtable.value;
+    StringImpl value(dataOffset);
+    
+    FSeek(position);
+} String <read = StringRead>;
+
+string StringImplRead(StringImpl &v) {
+    return v.data;
+};
+
+string StringRead(String &v) {
+    if (v.vtable.value == 0 ) return "";
+    
+    return v.value.data;
+};
+
+typedef struct (uint tableOffset, int valueOffset)
+{
+    local uint position = FTell();
+    
+    VTableOffset vtable(tableOffset, valueOffset);
+    if (vtable.value == 0) return;
+    
+    local uint dataOffset = vtable.value + tableOffset;
+    FSeek(dataOffset);
+    uint32 vectorOffset;
+    
+    local uint vectorBegin = dataOffset + vectorOffset + 4;
+    
+    dataOffset += vectorOffset;
+    FSeek(dataOffset);
+    uint32 length;
+    
+    FSeek(position);
+} Vector <read = VectorRead, bgcolor=0x00FFFF>;
+
+string VectorRead(Vector &v) {
+    if (v.vtable.value == 0) return "Empty";
+    
+    return "";
+};
+
+typedef struct (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        valueOffset = descriptor.vectorBegin + (i * 4);
+        FSeek(valueOffset);
+        float value;
+    }
+
+    FSeek(position);
+}  FloatVector <read=FloatVectorRead>;
+
+string FloatVectorRead(FloatVector &v) {
+    if (v.descriptor.vtable.value == 0) return "[ ]";
+    
+    local int i;
+    local string array = "%f";
+    for (i = 0; v.descriptor.length > i; i++)
+    {
+    }
+    
+    local string result = "[ %s ]";
+    Printf(result, array);
+    return result;
+};
+
+typedef struct (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        valueOffset = descriptor.vectorBegin + (i * 4);
+        StringImpl value(valueOffset);
+    }
+
+    FSeek(position);
+}  StringVector <bgcolor=0x00FFFF>;
+
+typedef struct (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        valueOffset = descriptor.vectorBegin + (i * 4);
+        FSeek(valueOffset);
+        int value;
+    }
+
+    FSeek(position);
+}  IntVector <bgcolor=0x00FFFF>;
+
+typedef struct (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+    
+    FSeek(descriptor.vectorBegin);
+    char data[descriptor.length];
+
+    FSeek(position);
+}  FlexBuffer <bgcolor=0xFFFF00>;
+
+//////////////////////////////////////////////////
+
+
+struct AcessorImpl (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    Integer BufferView(tableOffset, 4, -1);
+    Integer ByteOffset(tableOffset, 6, -1);
+    Integer ComponentType(tableOffset, 8, 5120);
+    Integer Count(tableOffset, 10, 0);
+    VTableOffset Sparse(tableOffset, 12);
+    String Name(tableOffset, 14);
+    FloatVector Max(tableOffset, 16);
+    FloatVector Min(tableOffset, 18);
+    
+    FSeek(position);
+};
+
+struct AssetImpl (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    String Name(tableOffset, 4);
+    FlexBuffer Extensions(tableOffset, 6);
+    FlexBuffer Extras(tableOffset, 8);
+    String Generator(tableOffset, 10);
+    String MinVersion(tableOffset, 12);
+    String Version(tableOffset, 14);
+    String Copyright(tableOffset, 16);
+    
+    FSeek(position);
+};
+
+struct BufferViewImpl (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    Integer Buffer(tableOffset, 4, 0);
+    Integer ByteLength(tableOffset, 6, 0);
+    Integer ByteOffset(tableOffset, 8, 0);
+    Integer ByteStride(tableOffset, 10, 0);
+    Integer Target(tableOffset, 10, 34962);
+    String Name(tableOffset, 12);
+    FlexBuffer Extensions(tableOffset, 14);
+    FlexBuffer Extras(tableOffset, 16);
+    
+    FSeek(position);
+};
+
+struct BufferImpl (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    Integer ByteLength(tableOffset, 4, 0);
+    String Uri(tableOffset, 6);
+    String Name(tableOffset, 8);
+    FlexBuffer Extensions(tableOffset, 10);
+    FlexBuffer Extras(tableOffset, 12);
+        
+    FSeek(position);
+};
+
+struct ImageImpl (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    FlexBuffer Extensions(tableOffset, 4);
+    FlexBuffer Extras(tableOffset, 6);
+    Integer BufferView(tableOffset, 8, -1);
+    String MimeType(tableOffset, 10);
+    String Name(tableOffset, 12);
+    String Uri(tableOffset, 14);
+        
+    FSeek(position);
+};
+
+struct MeshPrimitiveImpl (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    VTableOffset Unk(tableOffset, 2);
+    FlexBuffer Attributes(tableOffset, 4);
+    FlexBuffer Extensions(tableOffset, 6);
+    Byte Targets(tableOffset, 8, 0);
+    Integer Indices(tableOffset, 10, -1);
+    Integer Material(tableOffset, 12, -1);
+    Byte Mode(tableOffset, 14, 4);
+    FlexBuffer Extras(tableOffset, 16);
+        
+    FSeek(position);
+};
+
+struct MeshPrimitivesVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        MeshPrimitiveImpl primitive(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct MeshImpl (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    FlexBuffer Extensions(tableOffset, 4);
+    FlexBuffer Extras(tableOffset, 6);
+    String Name(tableOffset, 8);
+    MeshPrimitivesVector Primitives(tableOffset, 10);
+    FloatVector Weights(tableOffset, 12);
+        
+    FSeek(position);
+};
+
+typedef struct (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    Integer Camera(tableOffset, 4, -1);
+    IntVector Children(tableOffset, 6);
+    FlexBuffer Extensions(tableOffset, 8);
+    FlexBuffer Extras(tableOffset, 10);
+    FloatVector Weights(tableOffset, 12);
+    Integer Mesh(tableOffset, 14, -1);
+    String Name(tableOffset, 16);
+    FloatVector Rotation(tableOffset, 18);
+    FloatVector Scale(tableOffset, 20);
+    Integer Skin(tableOffset, 22, -1);
+    FloatVector Translation(tableOffset, 24);
+    FloatVector Matrix(tableOffset, 26);
+        
+    FSeek(position);
+} NodeImpl <read = NodeImplRead>;
+
+string NodeImplRead(NodeImpl &v) {
+    return v.Name.value.data;
+};
+
+typedef struct (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    FlexBuffer Extensions(tableOffset, 4);
+    FlexBuffer Extras(tableOffset, 6);
+    String Name(tableOffset, 8);
+    IntVector Nodes(tableOffset, 10);
+        
+    FSeek(position);
+} SceneImpl;
+
+typedef struct (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+    
+    FlexBuffer Extensions(tableOffset, 4);
+    FlexBuffer Extras(tableOffset, 6);
+    Integer InverseBindMatrices(tableOffset, 8, 0);
+    IntVector Joints(tableOffset, 10);
+    String Name(tableOffset, 12);
+    Integer Skeleton(tableOffset, 14, -1);
+        
+    FSeek(position);
+} SkinImpl;
+
+typedef struct (uint _tableOffset)
+{
+    local uint position = FTell();
+    
+    Indirect descriptor(_tableOffset);
+    local uint tableOffset = descriptor.value;
+
+    FlexBuffer Extensions(tableOffset, 4);
+    FlexBuffer Extras(tableOffset, 6);
+    Integer Sampler(tableOffset, 8, -1);
+    Integer Source(tableOffset, 10, -1);
+    
+    FSeek(position);
+} TextureImpl;
+
+///////////////////////////////////
+
+struct AssetStruct (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    VTableOffset descriptor(tableOffset, valueOffset);
+    if (descriptor.value == 0) return;
+    
+    AssetImpl asset(tableOffset + descriptor.value);
+    
+    FSeek(position);
+};
+
+struct AcessorsVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        AcessorImpl acessor(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct BufferViewsVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        BufferViewImpl bufferView(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct BuffersVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        BufferImpl buffer(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct ImagesVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        ImageImpl image(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct MeshesVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        MeshImpl mesh(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct NodesVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        NodeImpl node(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct ScenesVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        SceneImpl scene(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct SkinsVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        SkinImpl skin(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+
+struct TexturesVector (uint tableOffset, uint valueOffset)
+{
+    local uint position = FTell();
+    Vector descriptor(tableOffset, valueOffset);
+    if (descriptor.vtable.value == 0) return;
+
+    local int i;
+    local uint objectOffset;
+    for (i = 0; descriptor.length > i; i++)
+    {
+        objectOffset = descriptor.vectorBegin + (i * 4);
+        TextureImpl texture(objectOffset);
+    }
+
+    FSeek(position);
+};
+
+struct Root
+{
+    uint RootTableOffset;
+    AcessorsVector Acessors(RootTableOffset, 4);
+    VTableOffset Animations(RootTableOffset, 6);
+    AssetStruct Asset(RootTableOffset, 8);
+    BufferViewsVector BufferView(RootTableOffset, 10);
+    BuffersVector Buffers(RootTableOffset, 12);
+    VTableOffset Cameras(RootTableOffset, 14);
+    FlexBuffer Extensions(RootTableOffset, 16);
+    StringVector ExtensionsRequired(RootTableOffset, 18);
+    StringVector ExtensionsUsed(RootTableOffset, 20);
+    FlexBuffer Extras(RootTableOffset, 22);
+    ImagesVector Images(RootTableOffset, 24);
+    VTableOffset Materials(RootTableOffset, 26);
+    MeshesVector Meshes(RootTableOffset, 28);
+    NodesVector Nodes(RootTableOffset, 30);
+    VTableOffset Samplers(RootTableOffset, 32);
+    Integer Scene(RootTableOffset, 34, -1);
+    ScenesVector Scenes(RootTableOffset, 36);
+    SkinsVector Skins(RootTableOffset, 38);
+    
+}  File <bgcolor = 0xFFFFFF>;

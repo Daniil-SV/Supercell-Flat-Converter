@@ -3,7 +3,7 @@
 /// The datatype of components in the attribute.
 /// gltf_detailedDescription: The datatype of components in the attribute.  All valid values correspond to WebGL enums.  The corresponding typed arrays are `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Uint32Array`, and `Float32Array`, respectively.  5125 (UNSIGNED_INT) is only allowed when the accessor contains indices, i.e., the accessor is only referenced by `primitive.indices`.
 /// gltf_webgl: `vertexAttribPointer()` type parameter
-enum ComponentType: ushort { //TODO: promote to top
+enum ComponentType: uint {
 	BYTE = 5120,
 	UNSIGNED_BYTE = 5121,
 	SHORT = 5122,
@@ -674,12 +674,11 @@ table MeshPrimitiveAttribute {
 table MeshPrimitive {
 	/// "description": "A dictionary object, where each key corresponds to mesh attribute semantic and each value is the index of the accessor containing attribute's data."
 	///! NOTE: dictionary objects are not possible with flatbuffers (yet), hence this workaround
-	attributes: [ubyte](flexbuffer, required);
+	attributes: [ubyte](flexbuffer, deprecated);
 	// 4 OK
 
-	/// "description": "The type of primitives to render."
-	/// "gltf_detailedDescription": "The type of primitives to render. All valid values correspond to WebGL enums."
-	mode: MeshPrimitiveMode = TRIANGLES;
+	/// Dictionary object with extension-specific objects.
+	extensions: [ubyte](flexbuffer);
 	// 6 OK
 
 	/// "description": "An array of Morph Targets, each  Morph Target is a dictionary mapping attributes (only `POSITION`, `NORMAL`, and `TANGENT` supported) to their deviations in the Morph Target."
@@ -696,13 +695,15 @@ table MeshPrimitive {
 	material: int = -1; //glTFid
 	// 12 OK
 
-	/// Dictionary object with extension-specific objects.
-	extensions: [ubyte](flexbuffer);
+	/// "description": "The type of primitives to render."
+	/// "gltf_detailedDescription": "The type of primitives to render. All valid values correspond to WebGL enums."
+	//mode: MeshPrimitiveMode = TRIANGLES;
 	// 14
 
 	/// Application-specific data.
 	extras: [ubyte](flexbuffer);
 	// 16
+
 }
 
 /// Mesh
@@ -743,15 +744,15 @@ table Node {
 	children: [int]; //glTFid
 	// 6 OK
 	
+	/// Dictionary object with extension-specific objects.
+	extensions: [ubyte](flexbuffer);
+	
+	/// Application-specific data.
+	extras: [ubyte](flexbuffer);
+
 	/// "description": "The weights of the instantiated Morph Target. Number of elements must match number of Morph Targets of used mesh."
 	/// "minItems": 1
 	weights: [float]; // Number
-
-	/// Application-specific data.
-	extras: [ubyte](flexbuffer);
-	
-	/// Dictionary object with extension-specific objects.
-	extensions: [ubyte](flexbuffer);
 
 	/// "description": "The index of the mesh in this node."
 	mesh: int = -1; //glTFid

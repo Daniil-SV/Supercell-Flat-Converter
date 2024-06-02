@@ -147,7 +147,7 @@ class AccessorSparseIndices(object):
     def ComponentType(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
-            return self._tab.Get(flatbuffers.number_types.Uint16Flags, o + self._tab.Pos)
+            return self._tab.Get(flatbuffers.number_types.Uint32Flags, o + self._tab.Pos)
         return 5121
 
     # Dictionary object with extension-specific objects.
@@ -216,7 +216,7 @@ def AccessorSparseIndicesAddByteOffset(builder, byteOffset):
     builder.PrependUint32Slot(1, byteOffset, 0)
 
 def AccessorSparseIndicesAddComponentType(builder, componentType):
-    builder.PrependUint16Slot(2, componentType, 5121)
+    builder.PrependUint32Slot(2, componentType, 5121)
 
 def AccessorSparseIndicesAddExtensions(builder, extensions):
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(extensions), 0)
@@ -532,7 +532,7 @@ class Accessor(object):
     def ComponentType(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
-            return self._tab.Get(flatbuffers.number_types.Uint16Flags, o + self._tab.Pos)
+            return self._tab.Get(flatbuffers.number_types.Uint32Flags, o + self._tab.Pos)
         return 5120
 
     # "description": "The number of attributes referenced by this accessor."
@@ -710,7 +710,7 @@ def AccessorAddByteOffset(builder, byteOffset):
     builder.PrependInt32Slot(1, byteOffset, 0)
 
 def AccessorAddComponentType(builder, componentType):
-    builder.PrependUint16Slot(2, componentType, 5120)
+    builder.PrependUint32Slot(2, componentType, 5120)
 
 def AccessorAddCount(builder, count):
     builder.PrependInt32Slot(3, count, 0)
@@ -3212,43 +3212,33 @@ class MeshPrimitive(object):
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
 
-    # "description": "A dictionary object, where each key corresponds to mesh attribute semantic and each value is the index of the accessor containing attribute's data."
-    #! NOTE: dictionary objects are not possible with flatbuffers (yet), hence this workaround
+    # Dictionary object with extension-specific objects.
     # MeshPrimitive
-    def Attributes(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+    def Extensions(self, j):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
         return 0
 
     # MeshPrimitive
-    def AttributesAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+    def ExtensionsAsNumpy(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         if o != 0:
             return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
         return 0
 
     # MeshPrimitive
-    def AttributesLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+    def ExtensionsLength(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # MeshPrimitive
-    def AttributesIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
-        return o == 0
-
-    # "description": "The type of primitives to render."
-    # "gltf_detailedDescription": "The type of primitives to render. All valid values correspond to WebGL enums."
-    # MeshPrimitive
-    def Mode(self):
+    def ExtensionsIsNone(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
-        if o != 0:
-            return self._tab.Get(flatbuffers.number_types.Uint8Flags, o + self._tab.Pos)
-        return 4
+        return o == 0
 
     # "description": "An array of Morph Targets, each  Morph Target is a dictionary mapping attributes (only `POSITION`, `NORMAL`, and `TANGENT` supported) to their deviations in the Morph Target."
     # "description": "A dictionary object specifying attributes displacements in a Morph Target, where each key corresponds to one of the three supported attribute semantic (`POSITION`, `NORMAL`, or `TANGENT`) and each value is the index of the accessor containing the attribute displacements' data."
@@ -3296,38 +3286,12 @@ class MeshPrimitive(object):
             return self._tab.Get(flatbuffers.number_types.Int32Flags, o + self._tab.Pos)
         return -1
 
-    # Dictionary object with extension-specific objects.
-    # MeshPrimitive
-    def Extensions(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
-        if o != 0:
-            a = self._tab.Vector(o)
-            return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
-        return 0
-
-    # MeshPrimitive
-    def ExtensionsAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
-        if o != 0:
-            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
-        return 0
-
-    # MeshPrimitive
-    def ExtensionsLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
-        if o != 0:
-            return self._tab.VectorLen(o)
-        return 0
-
-    # MeshPrimitive
-    def ExtensionsIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
-        return o == 0
-
+    # "description": "The type of primitives to render."
+    # "gltf_detailedDescription": "The type of primitives to render. All valid values correspond to WebGL enums."
     # Application-specific data.
     # MeshPrimitive
     def Extras(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
@@ -3335,34 +3299,31 @@ class MeshPrimitive(object):
 
     # MeshPrimitive
     def ExtrasAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         if o != 0:
             return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
         return 0
 
     # MeshPrimitive
     def ExtrasLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # MeshPrimitive
     def ExtrasIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         return o == 0
 
 def MeshPrimitiveStart(builder):
-    builder.StartObject(7)
+    builder.StartObject(6)
 
-def MeshPrimitiveAddAttributes(builder, attributes):
-    builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(attributes), 0)
+def MeshPrimitiveAddExtensions(builder, extensions):
+    builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(extensions), 0)
 
-def MeshPrimitiveStartAttributesVector(builder, numElems):
+def MeshPrimitiveStartExtensionsVector(builder, numElems):
     return builder.StartVector(1, numElems, 1)
-
-def MeshPrimitiveAddMode(builder, mode):
-    builder.PrependUint8Slot(1, mode, 4)
 
 def MeshPrimitiveAddTargets(builder, targets):
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(targets), 0)
@@ -3376,14 +3337,8 @@ def MeshPrimitiveAddIndices(builder, indices):
 def MeshPrimitiveAddMaterial(builder, material):
     builder.PrependInt32Slot(4, material, -1)
 
-def MeshPrimitiveAddExtensions(builder, extensions):
-    builder.PrependUOffsetTRelativeSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(extensions), 0)
-
-def MeshPrimitiveStartExtensionsVector(builder, numElems):
-    return builder.StartVector(1, numElems, 1)
-
 def MeshPrimitiveAddExtras(builder, extras):
-    builder.PrependUOffsetTRelativeSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(extras), 0)
+    builder.PrependUOffsetTRelativeSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(extras), 0)
 
 def MeshPrimitiveStartExtrasVector(builder, numElems):
     return builder.StartVector(1, numElems, 1)
@@ -3623,32 +3578,31 @@ class Node(object):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         return o == 0
 
-    # "description": "The weights of the instantiated Morph Target. Number of elements must match number of Morph Targets of used mesh."
-    # "minItems": 1
+    # Dictionary object with extension-specific objects.
     # Node
-    def Weights(self, j):
+    def Extensions(self, j):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
             a = self._tab.Vector(o)
-            return self._tab.Get(flatbuffers.number_types.Float32Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 4))
+            return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
         return 0
 
     # Node
-    def WeightsAsNumpy(self):
+    def ExtensionsAsNumpy(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
-            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Float32Flags, o)
+            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
         return 0
 
     # Node
-    def WeightsLength(self):
+    def ExtensionsLength(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # Node
-    def WeightsIsNone(self):
+    def ExtensionsIsNone(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         return o == 0
 
@@ -3680,31 +3634,32 @@ class Node(object):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         return o == 0
 
-    # Dictionary object with extension-specific objects.
+    # "description": "The weights of the instantiated Morph Target. Number of elements must match number of Morph Targets of used mesh."
+    # "minItems": 1
     # Node
-    def Extensions(self, j):
+    def Weights(self, j):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
             a = self._tab.Vector(o)
-            return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
+            return self._tab.Get(flatbuffers.number_types.Float32Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 4))
         return 0
 
     # Node
-    def ExtensionsAsNumpy(self):
+    def WeightsAsNumpy(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
-            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
+            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Float32Flags, o)
         return 0
 
     # Node
-    def ExtensionsLength(self):
+    def WeightsLength(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # Node
-    def ExtensionsIsNone(self):
+    def WeightsIsNone(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         return o == 0
 
@@ -3873,11 +3828,11 @@ def NodeAddChildren(builder, children):
 def NodeStartChildrenVector(builder, numElems):
     return builder.StartVector(4, numElems, 4)
 
-def NodeAddWeights(builder, weights):
-    builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(weights), 0)
+def NodeAddExtensions(builder, extensions):
+    builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(extensions), 0)
 
-def NodeStartWeightsVector(builder, numElems):
-    return builder.StartVector(4, numElems, 4)
+def NodeStartExtensionsVector(builder, numElems):
+    return builder.StartVector(1, numElems, 1)
 
 def NodeAddExtras(builder, extras):
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(extras), 0)
@@ -3885,11 +3840,11 @@ def NodeAddExtras(builder, extras):
 def NodeStartExtrasVector(builder, numElems):
     return builder.StartVector(1, numElems, 1)
 
-def NodeAddExtensions(builder, extensions):
-    builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(extensions), 0)
+def NodeAddWeights(builder, weights):
+    builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(weights), 0)
 
-def NodeStartExtensionsVector(builder, numElems):
-    return builder.StartVector(1, numElems, 1)
+def NodeStartWeightsVector(builder, numElems):
+    return builder.StartVector(4, numElems, 4)
 
 def NodeAddMesh(builder, mesh):
     builder.PrependInt32Slot(5, mesh, -1)

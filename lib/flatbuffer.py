@@ -272,7 +272,7 @@ gltf_schema = {
             "extras": bytes,
         }
     ],
-    "scene": int,
+    "scene": int
 }
 
 #! ---------------- Deserializing ----------------

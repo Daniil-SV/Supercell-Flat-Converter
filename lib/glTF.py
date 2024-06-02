@@ -25,7 +25,7 @@ class glTF_Chunk:
         if (self.name != "JSON"): return
         
         self.data = serialize_glb_json(
-            json.loads(self.data)
+            loads(self.data)
         )
         self.name = "FLA2"
         
@@ -44,21 +44,18 @@ class glTF:
         
     def write(self) -> bytes:
         stream = BinaryReader()
-        
+
         stream.write_str("glTF") # Magic
         stream.write_uint32(2) # Version
-        
-        chunks_length = 0
-        for chunk in self.chunks:
-            chunks_length += len(chunk.data) + 8
-        
+
+        chunks_length = sum(len(chunk.data) + 8 for chunk in self.chunks)
         stream.write_uint32(len(stream.buffer()) + 4 + chunks_length)
-        
+
         for chunk in self.chunks:
             stream.write_uint32(len(chunk.data))
             stream.write_str_fixed(chunk.name, 4)
             stream.write_bytes(chunk.data)
-            
+
         return bytes(stream.buffer())
         
     def read(self, data: bytes) -> None:
