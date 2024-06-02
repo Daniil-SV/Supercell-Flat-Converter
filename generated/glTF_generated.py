@@ -3212,6 +3212,35 @@ class MeshPrimitive(object):
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
 
+    # "description": "A dictionary object, where each key corresponds to mesh attribute semantic and each value is the index of the accessor containing attribute's data."
+    #! NOTE: dictionary objects are not possible with flatbuffers (yet), hence this workaround
+    # MeshPrimitive
+    def Attributes(self, j):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+        if o != 0:
+            a = self._tab.Vector(o)
+            return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
+        return 0
+
+    # MeshPrimitive
+    def AttributesAsNumpy(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+        if o != 0:
+            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
+        return 0
+
+    # MeshPrimitive
+    def AttributesLength(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+        if o != 0:
+            return self._tab.VectorLen(o)
+        return 0
+
+    # MeshPrimitive
+    def AttributesIsNone(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+        return o == 0
+
     # Dictionary object with extension-specific objects.
     # MeshPrimitive
     def Extensions(self, j):
@@ -3288,10 +3317,17 @@ class MeshPrimitive(object):
 
     # "description": "The type of primitives to render."
     # "gltf_detailedDescription": "The type of primitives to render. All valid values correspond to WebGL enums."
+    # MeshPrimitive
+    def Mode(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
+        if o != 0:
+            return self._tab.Get(flatbuffers.number_types.Uint8Flags, o + self._tab.Pos)
+        return 4
+
     # Application-specific data.
     # MeshPrimitive
     def Extras(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(flatbuffers.number_types.Uint8Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 1))
@@ -3299,25 +3335,31 @@ class MeshPrimitive(object):
 
     # MeshPrimitive
     def ExtrasAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         if o != 0:
             return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint8Flags, o)
         return 0
 
     # MeshPrimitive
     def ExtrasLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # MeshPrimitive
     def ExtrasIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         return o == 0
 
 def MeshPrimitiveStart(builder):
-    builder.StartObject(6)
+    builder.StartObject(7)
+
+def MeshPrimitiveAddAttributes(builder, attributes):
+    builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(attributes), 0)
+
+def MeshPrimitiveStartAttributesVector(builder, numElems):
+    return builder.StartVector(1, numElems, 1)
 
 def MeshPrimitiveAddExtensions(builder, extensions):
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(extensions), 0)
@@ -3337,8 +3379,11 @@ def MeshPrimitiveAddIndices(builder, indices):
 def MeshPrimitiveAddMaterial(builder, material):
     builder.PrependInt32Slot(4, material, -1)
 
+def MeshPrimitiveAddMode(builder, mode):
+    builder.PrependUint8Slot(5, mode, 4)
+
 def MeshPrimitiveAddExtras(builder, extras):
-    builder.PrependUOffsetTRelativeSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(extras), 0)
+    builder.PrependUOffsetTRelativeSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(extras), 0)
 
 def MeshPrimitiveStartExtrasVector(builder, numElems):
     return builder.StartVector(1, numElems, 1)

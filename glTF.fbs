@@ -674,7 +674,7 @@ table MeshPrimitiveAttribute {
 table MeshPrimitive {
 	/// "description": "A dictionary object, where each key corresponds to mesh attribute semantic and each value is the index of the accessor containing attribute's data."
 	///! NOTE: dictionary objects are not possible with flatbuffers (yet), hence this workaround
-	attributes: [ubyte](flexbuffer, deprecated);
+	attributes: [ubyte](flexbuffer, required);
 	// 4 OK
 
 	/// Dictionary object with extension-specific objects.
@@ -697,7 +697,7 @@ table MeshPrimitive {
 
 	/// "description": "The type of primitives to render."
 	/// "gltf_detailedDescription": "The type of primitives to render. All valid values correspond to WebGL enums."
-	//mode: MeshPrimitiveMode = TRIANGLES;
+	mode: MeshPrimitiveMode = TRIANGLES;
 	// 14
 
 	/// Application-specific data.
