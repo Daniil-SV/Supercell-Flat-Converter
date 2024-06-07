@@ -204,6 +204,191 @@ class SupercellOdinGLTF:
 
         self.json["accessors"].extend(attribute_accessors)
         
+    def process_animation(self, animation: dict) -> None:
+        animations = self.json.get("animations", [])
+        
+        frame_rate = animation["frameRate"]
+        frame_spf = 1.0 / frame_rate
+        keyframes_count = animation["keyframeCount"]
+        used_nodes = animation["nodes"]
+        odin_animation_accessor = animation["accessor"]
+
+        animation_transform_array = self.decode_accessor_obj(self.json["accessors"][odin_animation_accessor])
+                    # Position + Quaternion Rotation + Scale
+        frame_transform_length = 3 + 4 + 3
+        animation_transform_array = np.reshape(animation_transform_array, (len(used_nodes), keyframes_count, frame_transform_length))
+
+        # Animation input
+        animation_input_index = len(self.json["accessors"])
+        animation_input_buffer = BinaryReader()
+        for i in range(keyframes_count):
+            animation_input_buffer.write_float(frame_spf * i)
+        self.json["accessors"].append(
+            {
+                "bufferView": len(self.json["bufferViews"]),
+                "componentType": 5126,
+                "count": keyframes_count,
+                "type": "SCALAR"
+            }
+        )
+        self.buffers.append(bytes(animation_input_buffer.buffer()))
+        
+        # Animation Transform
+        animation_buffers_indices: list[tuple[int, int, int]] = []
+        animation_transform_buffers: list[list[BinaryReader, BinaryReader, BinaryReader]] = [[BinaryReader() for _ in range(3)] for _ in used_nodes]
+        for node_index in range(len(used_nodes)):
+            for frame_index in range(keyframes_count):
+                #print(node_index)
+                translation, rotation, scale = animation_transform_buffers[node_index]
+                t, r, s = np.array_split(animation_transform_array[node_index][frame_index], [3, 7])
+                
+                for value in t:
+                    translation.write_float(value)
+                
+                for value in r:
+                    rotation.write_float(value)
+                
+                for value in s:
+                    scale.write_float(value)
+
+        for buffer in animation_transform_buffers:
+            translation, rotation, scale = buffer
+            base_accessor_index = len(self.json["accessors"])
+            base_bufferView_index = len(self.buffers)
+            
+            # Translation
+            self.json["accessors"].append(
+                {
+                    "bufferView": base_bufferView_index,
+                    "componentType": 5126,
+                    "count": keyframes_count,
+                    "type": "VEC3"
+                }
+            )
+            self.buffers.append(bytes(translation.buffer()))
+            
+            # Rotation
+            self.json["accessors"].append(
+                {
+                    "bufferView": base_bufferView_index + 1,
+                    "componentType": 5126,
+                    "count": keyframes_count,
+                    "type": "VEC4"
+                }
+            )
+            self.buffers.append(bytes(rotation.buffer()))
+            
+            # Scale
+            self.json["accessors"].append(
+                {
+                    "bufferView": base_bufferView_index + 2,
+                    "componentType": 5126,
+                    "count": keyframes_count,
+                    "type": "VEC3"
+                }
+            )
+            self.buffers.append(bytes(scale.buffer()))
+            
+            animation_buffers_indices.append(
+                [
+                    base_accessor_index,
+                    base_accessor_index + 1,
+                    base_accessor_index + 2
+                ]
+            )
+        
+        # Animation channels
+        animation_channels: list[dict] = []
+        animation_samplers: list[dict] = []
+        for node_number, node_index in enumerate(used_nodes):
+            translation, rotation, scale = animation_buffers_indices[node_number]
+            
+            # Translation
+            animation_channels.append(
+                {
+                    "sampler": len(animation_samplers),
+                    "target": {
+                        "node": node_index,
+                        "path": "translation"
+                    }
+                }
+            )
+            animation_samplers.append(
+                {
+                    "input": animation_input_index,
+                    "output": translation
+                }
+            )
+            
+            # Rotation
+            animation_channels.append(
+                {
+                    "sampler": len(animation_samplers),
+                    "target": {
+                        "node": node_index,
+                        "path": "rotation"
+                    }
+                }
+            )
+            animation_samplers.append(
+                {
+                    "input": animation_input_index,
+                    "output": rotation
+                }
+            )
+            
+            # Scale
+            animation_channels.append(
+                {
+                    "sampler": len(animation_samplers),
+                    "target": {
+                        "node": node_index,
+                        "path": "scale"
+                    }
+                }
+            )
+            animation_samplers.append(
+                {
+                    "input": animation_input_index,
+                    "output": scale
+                }
+            )
+
+        animations.append(
+            {
+                "name": "clip",
+                "channels": animation_channels,
+                "samplers": animation_samplers
+            }
+        )
+        
+        self.json["animations"] = animations
+        
+        self.process_animation_skin(used_nodes)
+        
+    def process_animation_skin(self, nodes: list[int]) -> None:
+        skins: list[dict] = self.json.get("skins", [])
+    
+        for skin in skins:
+            joints: list[int] = skin["joints"]
+            if (all(joints, nodes)): return
+            
+        new_skin_joints: list[int] = []
+        def add_skin_joint(idx: int):
+            node = self.json["nodes"][idx]
+            childrens = node.get("children", [])
+            for children in childrens:
+                add_skin_joint(children)
+            if (idx not in new_skin_joints):
+                new_skin_joints.append(idx)
+        
+        for node in nodes:
+            add_skin_joint(node)
+        
+        skins.append({
+            "joints": new_skin_joints
+        })
+        self.json["skins"] = skins
     
     def calculate_odin_positions_count(self, accessor: dict) -> int:
         array = self.decode_accessor_obj(accessor)
@@ -218,6 +403,9 @@ class SupercellOdinGLTF:
         
         if "materials" in odin:
             self.json["materials"] = odin["materials"]
+            
+        if "animation" in odin:
+            self.process_animation(odin["animation"])
         
         if ("extensionsUsed" not in self.json): self.json["extensionsUsed"] = []
         self.json["extensionsUsed"].extend(SupercellOdinGLTF.UsedExtensions)

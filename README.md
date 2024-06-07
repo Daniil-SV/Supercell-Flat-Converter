@@ -3,7 +3,7 @@
 </p>
 
 # Description
-The purpose of this script is to convert Supercell glTF files that was optimized with [Flatbuffer](https://github.com/google/flatbuffers) into a regular json and then import it into any 3D software  
+The purpose of this script is to convert Supercell glTF files that was optimized with [Flatbuffer](https://github.com/google/flatbuffers) and special extension for "Odin" asset layer into a regular glTF and then import it into any 3D software  
 and also it support back conversion just in case
 
 # How to use
