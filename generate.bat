@@ -1,1 +1,1 @@
-call flatc -o .lib/generated/ glTF.fbs --python --gen-onefile
+call flatc -o lib/generated/ glTF.fbs --python --gen-onefile
