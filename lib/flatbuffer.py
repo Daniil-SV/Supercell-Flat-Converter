@@ -1,4 +1,4 @@
-import generated.glTF_generated as flat
+import lib.generated.glTF_generated as flat
 from flatbuffers import flexbuffers, Builder
 from enum import IntEnum
 import numpy as np
