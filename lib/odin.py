@@ -12,6 +12,20 @@ import numpy as np
 # Idk what sense of modifying component type
 # Maybe it more like GPU hint or smth like this
 
+class BufferView:
+    def __init__(self) -> None:
+        self.stride: int = None
+        self.data: bytes = b''
+        self.offset: int = None
+        
+    def serialize(self):
+        return {
+            "buffer": 0,
+            "byteOffset": self.offset,
+            "byteLength": len(self.data),
+            "byteStride": self.stride
+        }
+
 class SupercellOdinGLTF:
     UsedExtensions = [
         #"KHR_mesh_quantization",
@@ -26,7 +40,7 @@ class SupercellOdinGLTF:
     def __init__(self, gltf: glTF) -> None:
         self.gltf = gltf
         self.json = gltf.get_chunk("JSON").data
-        self.buffers: list[bytes] = []
+        self.buffers: list[BufferView] = []
         self.odin_buffer_index: int = -1
         
         binary = gltf.get_chunk("BIN").data
@@ -190,7 +204,7 @@ class SupercellOdinGLTF:
                 }
             )
         
-        mesh_buffer = self.buffers[self.odin_buffer_index]
+        mesh_buffer = self.buffers[self.odin_buffer_index].data
         for tris_idx in range(positions_count):
             for attr_idx, attribute in enumerate(attribute_descriptor):
                 value_offset = offset + (stride * tris_idx) + attribute.offset
@@ -200,7 +214,10 @@ class SupercellOdinGLTF:
         for i, attribute in enumerate(attribute_descriptor):
             attribute_name = OdinAttributeType.to_attribute_name(attribute.type)
             attributes[attribute_name] = len(self.json["accessors"]) + i
-            self.buffers.append(attribute_buffers[i].tobytes())
+            
+            buffer_view = BufferView()
+            buffer_view.data = attribute_buffers[i].tobytes()
+            self.buffers.append(buffer_view)
 
         self.json["accessors"].extend(attribute_accessors)
         
@@ -231,7 +248,9 @@ class SupercellOdinGLTF:
                 "type": "SCALAR"
             }
         )
-        self.buffers.append(bytes(animation_input_buffer.buffer()))
+        buffer_view = BufferView()
+        buffer_view.data = bytes(animation_input_buffer.buffer())
+        self.buffers.append(buffer_view)
         
         # Animation Transform
         animation_buffers_indices: list[tuple[int, int, int]] = []
@@ -265,7 +284,9 @@ class SupercellOdinGLTF:
                     "type": "VEC3"
                 }
             )
-            self.buffers.append(bytes(translation.buffer()))
+            translation_buffer_view = BufferView()
+            translation_buffer_view.data = bytes(translation.buffer())
+            self.buffers.append(translation_buffer_view)
             
             # Rotation
             self.json["accessors"].append(
@@ -276,7 +297,9 @@ class SupercellOdinGLTF:
                     "type": "VEC4"
                 }
             )
-            self.buffers.append(bytes(rotation.buffer()))
+            rotation_buffer_view = BufferView()
+            rotation_buffer_view.data = bytes(rotation.buffer())
+            self.buffers.append(rotation_buffer_view)
             
             # Scale
             self.json["accessors"].append(
@@ -287,7 +310,9 @@ class SupercellOdinGLTF:
                     "type": "VEC3"
                 }
             )
-            self.buffers.append(bytes(scale.buffer()))
+            scale_buffer_view = BufferView()
+            scale_buffer_view.data = bytes(scale.buffer())
+            self.buffers.append(scale_buffer_view)
             
             animation_buffers_indices.append(
                 [
@@ -421,16 +446,13 @@ class SupercellOdinGLTF:
         bufferView: list[dict] = []
         
         for buffer in self.buffers:
+            buffer.offset = stream.pos()
             bufferView.append(
-                {
-                    "buffer": 0,
-                    "byteOffset": stream.pos(),
-                    "byteLength": len(buffer)
-                }
+                buffer.serialize()
             )
             
-            stream.write_bytes(buffer)
-            stream.pad(-len(buffer) % 16)
+            stream.write_bytes(buffer.data)
+            stream.pad(-len(buffer.data) % 16)
         
         buffers.append(
             {
@@ -467,7 +489,10 @@ class SupercellOdinGLTF:
             stream.seek(offset)
             data = stream.read_bytes(length)
             
-            self.buffers.append(data)
+            buffer = BufferView()
+            buffer.stride = bufferView.get("byteStride", None)
+            buffer.data = data
+            self.buffers.append(buffer)
             
     
     def save(self) -> glTF:
@@ -493,7 +518,7 @@ class SupercellOdinGLTF:
         buffer_view_index = accessor.get("bufferView")
         if buffer_view_index is not None:
             bufferView = self.json["bufferViews"][buffer_view_index]
-            buffer_data = self.buffers[buffer_view_index]
+            buffer_data = self.buffers[buffer_view_index].data
 
             accessor_offset = accessor.get("byteOffset") or 0
 
