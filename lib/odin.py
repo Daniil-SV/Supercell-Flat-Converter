@@ -4,6 +4,7 @@ from lib.gltf_constants import DataType, ComponentType
 from lib.odin_attribute import OdinAttribute
 from lib.odin_constants import OdinAttributeFormat, OdinAttributeType
 import numpy as np
+import json
 
 ## Exclusive Accessor Component Types
 # 1 - Float Vector 3
@@ -40,6 +41,8 @@ class SupercellOdinGLTF:
     def __init__(self, gltf: glTF) -> None:
         self.gltf = gltf
         self.json = gltf.get_chunk("JSON").data
+        if isinstance(self.json ,bytes):
+            self.json = json.loads(self.json)
         self.buffers: list[BufferView] = []
         self.odin_buffer_index: int = -1
         
