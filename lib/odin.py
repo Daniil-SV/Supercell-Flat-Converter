@@ -20,12 +20,16 @@ class BufferView:
         self.offset: int = None
         
     def serialize(self):
-        return {
+        data = {
             "buffer": 0,
             "byteOffset": self.offset,
             "byteLength": len(self.data),
-            "byteStride": self.stride
         }
+        
+        if self.stride is not None:
+            data["byteStride"] = self.stride
+            
+        return data
 
 class SupercellOdinGLTF:
     UsedExtensions = [
@@ -45,6 +49,7 @@ class SupercellOdinGLTF:
             self.json = json.loads(self.json)
         self.buffers: list[BufferView] = []
         self.odin_buffer_index: int = -1
+        self.mesh_descriptors: list[dict] = []
         
         binary = gltf.get_chunk("BIN").data
         self.produce_buffers(binary)
@@ -156,13 +161,15 @@ class SupercellOdinGLTF:
         extensions: dict = primitive.get("extensions", {})
         if "SC_odin_format" not in extensions: return
         
-        odin = extensions.pop("SC_odin_format")
+        odin: dict = extensions.pop("SC_odin_format")
         indices = primitive.get("indices")
         count = self.calculate_odin_positions_count(self.json["accessors"][indices])
-        descriptors: list[dict] = odin["vertexDescriptors"]
+        
+        mesh_descriptor = odin if "vertexDescriptors" in odin else self.mesh_descriptors[odin["meshDataInfoIndex"]]
+        vertex_descriptors: list[dict] = mesh_descriptor["vertexDescriptors"]
         attributes = {}
         
-        for descriptor in descriptors:
+        for descriptor in vertex_descriptors:
             self.process_odin_primitive_descriptor(descriptor, attributes, count)
         
         primitive["attributes"] = attributes
@@ -188,7 +195,7 @@ class SupercellOdinGLTF:
             
             attribute_type = OdinAttributeType(attribute_type_index)
             attribute_format = OdinAttributeFormat(attribute_format_index)
-            isInteger = attribute["interpretAsInteger"]
+            isInteger = attribute.get("interpretAsInteger", False)
             attribute = OdinAttribute(
                 attribute_type,
                 attribute_format,
@@ -426,8 +433,9 @@ class SupercellOdinGLTF:
     
     def initialize_odin(self) -> None:
         extensions: dict = self.json.get("extensions")
-        odin = extensions.pop("SC_odin_format")
+        odin: dict = extensions.pop("SC_odin_format")
         self.odin_buffer_index = odin["bufferView"]
+        self.mesh_descriptors = odin.get("meshDataInfos", [])
         
         if "materials" in odin:
             self.json["materials"] = odin["materials"]

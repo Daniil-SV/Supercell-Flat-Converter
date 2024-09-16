@@ -4,7 +4,7 @@ import argparse
 from lib.glTF import glTF, ObjectProcessor
 from lib.odin import SupercellOdinGLTF
 
-debug = True
+debug = False
 
 required_folders = {
     "sc_input": "In-SC-glTF",
@@ -19,25 +19,30 @@ if (debug):
 
 def decode(post_process: bool):
     files = os.scandir(required_folders["sc_input"])
-    
+
     for filepath in files:
         gltf = glTF()
-        
+
         with open(filepath.path, "rb") as file:
             gltf.read(file.read())
 
         for chunk in gltf.chunks:
             chunk.deserialize_json()
-            
+
         if (post_process):
             odin = SupercellOdinGLTF(gltf)
             gltf = odin.process()
-        
-        if (debug):
-            open(os.path.join(required_folders["out_debug"], filepath.name) + ".json", "wb").write([bytes(json.dumps(chunk.data, cls=ObjectProcessor, indent=4), "utf8") for chunk in gltf.chunks if chunk.name == "JSON"][0])
-        
+
+        if debug:
+            if chunks_data := [
+                chunk.data
+                for chunk in gltf.chunks
+                if chunk.name == "JSON" and not isinstance(chunk.data, bytes)
+            ]:
+                open(os.path.join(required_folders["out_debug"], filepath.name) + ".json", "wb").write(bytes(json.dumps(chunks_data, cls=ObjectProcessor, indent=4), "utf8"))
+
         print(f"Successful: {filepath.name}")
-        
+
         with open(os.path.join(required_folders["def_output"], filepath.name), "wb") as file:
             file.write(gltf.write())
 
