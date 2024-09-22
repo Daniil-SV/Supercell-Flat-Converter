@@ -195,7 +195,7 @@ class SupercellOdinGLTF:
             
             attribute_type = OdinAttributeType(attribute_type_index)
             attribute_format = OdinAttributeFormat(attribute_format_index)
-            isInteger = attribute.get("interpretAsInteger", False)
+            isInteger = attribute.get("interpretAsInteger")
             attribute = OdinAttribute(
                 attribute_type,
                 attribute_format,
@@ -204,15 +204,15 @@ class SupercellOdinGLTF:
             
             attribute_buffers.append(np.zeros((positions_count, attribute.elements_count), dtype=attribute.data_type))
             attribute_descriptor.append(attribute)
-            attribute_accessors.append(
-                {
+            accessor = {
                     "bufferView": len(self.buffers) + i,
                     "componentType": OdinAttributeFormat.to_accessor_component(attribute_format),
-                    "normalized": isInteger == False,
                     "count": int(positions_count),
                     "type": OdinAttributeFormat.to_accessor_type(attribute_format)
                 }
-            )
+            if isInteger is not None:
+                accessor["normalized"] = isInteger == False
+            attribute_accessors.append(accessor)
         
         mesh_buffer = self.buffers[self.odin_buffer_index].data
         for tris_idx in range(positions_count):
