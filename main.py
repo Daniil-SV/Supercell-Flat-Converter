@@ -23,8 +23,13 @@ def decode(post_process: bool):
     for filepath in files:
         gltf = glTF()
 
-        with open(filepath.path, "rb") as file:
-            gltf.read(file.read())
+        try:
+            with open(filepath.path, "rb") as file:
+                gltf.read(file.read())
+        except ValueError as e:
+            print(f"Error: {e}")
+            print(f"Failed to read file by name \"{filepath.name}\". Skip...")
+            continue
 
         for chunk in gltf.chunks:
             chunk.deserialize_json()

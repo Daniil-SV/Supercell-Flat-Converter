@@ -267,7 +267,6 @@ class SupercellOdinGLTF:
         animation_transform_buffers: list[list[BinaryReader, BinaryReader, BinaryReader]] = [[BinaryReader() for _ in range(3)] for _ in used_nodes]
         for node_index in range(len(used_nodes)):
             for frame_index in range(keyframes_count):
-                #print(node_index)
                 translation, rotation, scale = animation_transform_buffers[node_index]
                 t, r, s = np.array_split(animation_transform_array[node_index][frame_index], [3, 7])
                 
