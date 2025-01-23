@@ -212,6 +212,9 @@ class SupercellOdinGLTF:
                 }
             if isInteger is not None:
                 accessor["normalized"] = isInteger == False
+            else:
+                accessor["normalized"] = OdinAttributeFormat.is_normalized(attribute_format)
+                
             attribute_accessors.append(accessor)
         
         mesh_buffer = self.buffers[self.odin_buffer_index].data

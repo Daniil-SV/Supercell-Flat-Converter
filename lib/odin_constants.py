@@ -29,6 +29,8 @@ class OdinAttributeType(IntEnum):
             OdinAttributeType.a_uv0: 'TEXCOORD_0',
             OdinAttributeType.a_uv1: 'TEXCOORD_1',
             OdinAttributeType.a_color: 'COLOR_0',
+            OdinAttributeType.a_colorAdd: 'COLOR_1',
+            OdinAttributeType.a_colorMul: 'COLOR_2',
         }[component_type]
 
 
@@ -39,6 +41,17 @@ class OdinAttributeFormat(IntEnum):
     FloatVector2 = 29
     FloatVector3 = 30
     NormalizedWeightVector = 36
+    
+    @classmethod
+    def is_normalized(cls, component_type) -> bool:
+        return {
+            OdinAttributeFormat.FloatVector3: False,
+            OdinAttributeFormat.UByteVector3: False,
+            OdinAttributeFormat.UByteVector4: False,
+            OdinAttributeFormat.NormalizedWeightVector: False,
+            OdinAttributeFormat.FloatVector2: False,
+            OdinAttributeFormat.ColorRGBA: True,
+        }[component_type]
     
     @classmethod
     def to_accessor_type(cls, component_type) -> str:
