@@ -240,36 +240,61 @@ class SupercellOdinGLTF:
         frame_rate = animation.get("frameRate") or 30
         frame_spf = 1.0 / frame_rate
         keyframes_count = animation.get("keyframesCount") or 1
+        individual_keyframes_count = animation.get("keyframeCounts")
+        keyframes_total = sum(individual_keyframes_count) if individual_keyframes_count else keyframes_count
         used_nodes = animation["nodes"]
         odin_animation_accessor = animation["accessor"]
 
         animation_transform_array = self.decode_accessor_obj(self.json["accessors"][odin_animation_accessor])
                     # Position + Quaternion Rotation + Scale
         frame_transform_length = 3 + 4 + 3
-        animation_transform_array = np.reshape(animation_transform_array, (len(used_nodes), keyframes_count, frame_transform_length))
+        if (individual_keyframes_count):
+            animation_transform_array = np.reshape(animation_transform_array, (keyframes_total, frame_transform_length))
+            animation_transform_array = np.split(animation_transform_array, np.cumsum(individual_keyframes_count)[:-1])
+        else:
+            animation_transform_array = np.reshape(animation_transform_array, (len(used_nodes), keyframes_count, frame_transform_length))
 
         # Animation input
-        animation_input_index = len(self.json["accessors"])
-        animation_input_buffer = BinaryReader()
-        for i in range(keyframes_count):
-            animation_input_buffer.write_float(frame_spf * i)
-        self.json["accessors"].append(
-            {
-                "bufferView": len(self.json["bufferViews"]),
-                "componentType": 5126,
-                "count": keyframes_count,
-                "type": "SCALAR"
+        animation_input_index = None
+        individual_input_index = None
+        
+        def create_input_buffer(count: int) -> int:
+            result = len(self.json["accessors"])
+            animation_input_buffer = BinaryReader()
+            for i in range(count):
+                animation_input_buffer.write_float(frame_spf * i)
+            self.json["accessors"].append(
+                {
+                    "bufferView": len(self.buffers),
+                    "componentType": 5126,
+                    "count": count,
+                    "type": "SCALAR"
+                }
+            )
+            buffer_view = BufferView()
+            buffer_view.data = bytes(animation_input_buffer.buffer())
+            self.buffers.append(buffer_view)
+            return result
+        
+        if (individual_keyframes_count):
+            individual_input_index = {
+                num: 0 for num in individual_keyframes_count
             }
-        )
-        buffer_view = BufferView()
-        buffer_view.data = bytes(animation_input_buffer.buffer())
-        self.buffers.append(buffer_view)
+            
+            for num in individual_input_index.keys():
+                individual_input_index[num] = create_input_buffer(num)
+                
+        else:
+            animation_input_index = create_input_buffer(keyframes_count)
+        
+        
         
         # Animation Transform
         animation_buffers_indices: list[tuple[int, int, int]] = []
         animation_transform_buffers: list[list[BinaryReader, BinaryReader, BinaryReader]] = [[BinaryReader() for _ in range(3)] for _ in used_nodes]
         for node_index in range(len(used_nodes)):
-            for frame_index in range(keyframes_count):
+            node_keyframes = individual_keyframes_count[node_index] if individual_keyframes_count else keyframes_count
+            for frame_index in range(node_keyframes):
                 translation, rotation, scale = animation_transform_buffers[node_index]
                 t, r, s = np.array_split(animation_transform_array[node_index][frame_index], [3, 7])
                 
@@ -282,17 +307,18 @@ class SupercellOdinGLTF:
                 for value in s:
                     scale.write_float(value)
 
-        for buffer in animation_transform_buffers:
+        for idx, buffer in enumerate(animation_transform_buffers):
             translation, rotation, scale = buffer
             base_accessor_index = len(self.json["accessors"])
             base_bufferView_index = len(self.buffers)
+            node_keyframes = individual_keyframes_count[idx] if individual_keyframes_count else keyframes_count
             
             # Translation
             self.json["accessors"].append(
                 {
                     "bufferView": base_bufferView_index,
                     "componentType": 5126,
-                    "count": keyframes_count,
+                    "count": node_keyframes,
                     "type": "VEC3"
                 }
             )
@@ -305,7 +331,7 @@ class SupercellOdinGLTF:
                 {
                     "bufferView": base_bufferView_index + 1,
                     "componentType": 5126,
-                    "count": keyframes_count,
+                    "count": node_keyframes,
                     "type": "VEC4"
                 }
             )
@@ -318,7 +344,7 @@ class SupercellOdinGLTF:
                 {
                     "bufferView": base_bufferView_index + 2,
                     "componentType": 5126,
-                    "count": keyframes_count,
+                    "count": node_keyframes,
                     "type": "VEC3"
                 }
             )
@@ -340,6 +366,8 @@ class SupercellOdinGLTF:
         for node_number, node_index in enumerate(used_nodes):
             translation, rotation, scale = animation_buffers_indices[node_number]
             
+            input_index = individual_input_index[individual_keyframes_count[node_number]] if individual_keyframes_count else animation_input_index
+            
             # Translation
             animation_channels.append(
                 {
@@ -352,7 +380,7 @@ class SupercellOdinGLTF:
             )
             animation_samplers.append(
                 {
-                    "input": animation_input_index,
+                    "input": input_index,
                     "output": translation
                 }
             )
@@ -369,7 +397,7 @@ class SupercellOdinGLTF:
             )
             animation_samplers.append(
                 {
-                    "input": animation_input_index,
+                    "input": input_index,
                     "output": rotation
                 }
             )
@@ -386,7 +414,7 @@ class SupercellOdinGLTF:
             )
             animation_samplers.append(
                 {
-                    "input": animation_input_index,
+                    "input": input_index,
                     "output": scale
                 }
             )
