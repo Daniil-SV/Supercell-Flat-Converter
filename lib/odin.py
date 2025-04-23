@@ -50,6 +50,7 @@ class SupercellOdinGLTF:
         self.buffers: list[BufferView] = []
         self.odin_buffer_index: int = -1
         self.mesh_descriptors: list[dict] = []
+        self.cached_mesh_descriptors: dict = {}
         
         binary = gltf.get_chunk("BIN").data
         self.produce_buffers(binary)
@@ -165,12 +166,19 @@ class SupercellOdinGLTF:
         indices = primitive.get("indices")
         count = self.calculate_odin_positions_count(self.json["accessors"][indices])
         
-        mesh_descriptor = odin if "vertexDescriptors" in odin else self.mesh_descriptors[odin["meshDataInfoIndex"]]
+        info_index = odin.get("meshDataInfoIndex")
+        mesh_descriptor = odin if "vertexDescriptors" in odin else self.mesh_descriptors[info_index]
         vertex_descriptors: list[dict] = mesh_descriptor["vertexDescriptors"]
+        
         attributes = {}
         
-        for descriptor in vertex_descriptors:
-            self.process_odin_primitive_descriptor(descriptor, attributes, count)
+        if (info_index in self.cached_mesh_descriptors):
+            attributes = self.cached_mesh_descriptors[info_index]
+        else:
+            for descriptor in vertex_descriptors:
+                self.process_odin_primitive_descriptor(descriptor, attributes, count)
+            self.cached_mesh_descriptors[info_index] = attributes
+        
         
         primitive["attributes"] = attributes
         
