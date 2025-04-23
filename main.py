@@ -39,12 +39,16 @@ def decode(post_process: bool):
             gltf = odin.process()
 
         if debug:
-            if chunks_data := [
-                chunk.data
-                for chunk in gltf.chunks
-                if chunk.name == "JSON" and not isinstance(chunk.data, bytes)
-            ]:
-                open(os.path.join(required_folders["out_debug"], filepath.name) + ".json", "wb").write(bytes(json.dumps(chunks_data, cls=ObjectProcessor, indent=4), "utf8"))
+            for chunk in gltf.chunks:
+                if chunk.name != "JSON": continue
+                
+                file = open(os.path.join(required_folders["out_debug"], filepath.name) + ".json", "wb")
+                if (isinstance(chunk.data, bytes)):
+                    file.write(chunk.data)
+                else:
+                    file.write(bytes(json.dumps(chunk.data, cls=ObjectProcessor, indent=4), "utf8"))
+
+                break
 
         print(f"Successful: {filepath.name}")
 

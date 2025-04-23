@@ -1,21 +1,17 @@
 {
+    // Используйте IntelliSense, чтобы узнать о возможных атрибутах.
+    // Наведите указатель мыши, чтобы просмотреть описания существующих атрибутов.
+    // Для получения дополнительной информации посетите: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "Encode",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "args": ["encode"],
-            "console": "integratedTerminal",
-        },
+
         {
             "name": "Decode",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "main.py",
-            "args": ["decode"],
             "console": "integratedTerminal",
+            "args": "decode"
         }
     ]
 }

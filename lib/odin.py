@@ -237,9 +237,9 @@ class SupercellOdinGLTF:
     def process_animation(self, animation: dict) -> None:
         animations = self.json.get("animations", [])
         
-        frame_rate = animation["frameRate"]
+        frame_rate = animation.get("frameRate") or 30
         frame_spf = 1.0 / frame_rate
-        keyframes_count = animation["keyframeCount"]
+        keyframes_count = animation.get("keyframesCount") or 1
         used_nodes = animation["nodes"]
         odin_animation_accessor = animation["accessor"]
 
