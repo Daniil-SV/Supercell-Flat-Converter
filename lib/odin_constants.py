@@ -18,6 +18,7 @@ class OdinAttributeType(IntEnum):
     a_model3 = 12
     a_binormal = 13
     a_skinningOffsets = 14
+    a_color1 = 15
     
     @classmethod
     def to_attribute_name(cls, component_type) -> str:
@@ -29,8 +30,9 @@ class OdinAttributeType(IntEnum):
             OdinAttributeType.a_uv0: 'TEXCOORD_0',
             OdinAttributeType.a_uv1: 'TEXCOORD_1',
             OdinAttributeType.a_color: 'COLOR_0',
-            OdinAttributeType.a_colorAdd: 'COLOR_1',
-            OdinAttributeType.a_colorMul: 'COLOR_2',
+            OdinAttributeType.a_color1: 'COLOR_1',
+            #OdinAttributeType.a_colorAdd: 'COLOR_1',
+            #OdinAttributeType.a_colorMul: 'COLOR_2',
         }[component_type]
 
 
