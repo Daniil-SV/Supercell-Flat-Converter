@@ -239,8 +239,11 @@ class SupercellOdinGLTF:
         
         frame_rate = animation.get("frameRate") or 30
         frame_spf = 1.0 / frame_rate
-        keyframes_count = animation.get("keyframesCount") or 1
+        keyframes_count = animation.get("keyframesCount") or 1  
+        nodes_per_keyframe = animation.get("nodesNumberPerKeyframe")
         individual_keyframes_count = animation.get("keyframeCounts")
+        if (individual_keyframes_count): individual_keyframes_count = [[num] * nodes_per_keyframe[i] for i, num in enumerate(individual_keyframes_count)][0]
+        
         keyframes_total = sum(individual_keyframes_count) if individual_keyframes_count else keyframes_count
         used_nodes = animation["nodes"]
         odin_animation_accessor = animation["accessor"]
@@ -292,6 +295,7 @@ class SupercellOdinGLTF:
         # Animation Transform
         animation_buffers_indices: list[tuple[int, int, int]] = []
         animation_transform_buffers: list[list[BinaryReader, BinaryReader, BinaryReader]] = [[BinaryReader() for _ in range(3)] for _ in used_nodes]
+
         for node_index in range(len(used_nodes)):
             node_keyframes = individual_keyframes_count[node_index] if individual_keyframes_count else keyframes_count
             for frame_index in range(node_keyframes):
@@ -436,7 +440,7 @@ class SupercellOdinGLTF:
     
         for skin in skins:
             joints: list[int] = skin["joints"]
-            if (all(joints, nodes)): return
+            if (all(joints) and all(nodes)): return
             
         new_skin_joints: list[int] = []
         def add_skin_joint(idx: int):
