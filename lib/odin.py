@@ -242,7 +242,8 @@ class SupercellOdinGLTF:
         keyframes_count = animation.get("keyframesCount") or 1  
         nodes_per_keyframe = animation.get("nodesNumberPerKeyframe")
         individual_keyframes_count = animation.get("keyframeCounts")
-        if (individual_keyframes_count): individual_keyframes_count = [[num] * nodes_per_keyframe[i] for i, num in enumerate(individual_keyframes_count)][0]
+        if (individual_keyframes_count): 
+            individual_keyframes_count = [num for i, num in enumerate(individual_keyframes_count) for _ in range(nodes_per_keyframe[i])]
         
         keyframes_total = sum(individual_keyframes_count) if individual_keyframes_count else keyframes_count
         used_nodes = animation["nodes"]
