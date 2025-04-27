@@ -145,8 +145,46 @@ class SupercellOdinGLTF:
             
             extensions.pop("SC_odin_format")
             
+    def create_primitive_cache(self, meshes: list[dict]) -> None:
+        vertex_count = {}
+        descriptors = {}
+        
+        for mesh in meshes:
+            primitives = mesh.get("primitives")
+            if (primitives is None): continue
+            
+            for primitive in primitives:
+                extensions: dict = primitive.get("extensions", {})
+                if "SC_odin_format" not in extensions: continue
+                
+                odin: dict = extensions["SC_odin_format"]
+                indices = primitive.get("indices")
+                count = self.calculate_odin_positions_count(self.json["accessors"][indices])
+            
+                info_index = odin.get("meshDataInfoIndex")
+                mesh_descriptor = odin if "vertexDescriptors" in odin else self.mesh_descriptors[info_index]
+                vertex_descriptors: list[dict] = mesh_descriptor["vertexDescriptors"]
+                
+                if info_index not in descriptors:
+                    descriptors[info_index] = vertex_descriptors
+                
+                if (info_index in vertex_count):
+                    vertex_count[info_index] = max(vertex_count[info_index], count)
+                else:
+                    vertex_count[info_index] = count
+        
+        for idx, vertex_descriptors in descriptors.items():
+            attributes = {}
+            for descriptor in vertex_descriptors:
+                self.process_odin_primitive_descriptor(descriptor, attributes, vertex_count[idx])
+                
+            self.cached_mesh_descriptors[idx] = attributes
+                
+                
+            
     def process_meshes(self) -> None:
         meshes: list[dict] = self.json.get("meshes", [])
+        self.create_primitive_cache(meshes)
         
         for mesh in meshes:
             extensions: dict = mesh.get("extensions", {})
