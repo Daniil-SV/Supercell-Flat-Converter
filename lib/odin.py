@@ -285,7 +285,7 @@ class SupercellOdinGLTF:
         
         frame_rate = animation.get("frameRate") or 30
         frame_spf = 1.0 / frame_rate
-        keyframes_count = animation.get("keyframesCount") or 1  
+        keyframes_count = (animation.get("keyframesCount") or animation.get("keyframeCount")) or 1  
         nodes_per_keyframe = animation.get("nodesNumberPerKeyframe")
         individual_keyframes_count = animation.get("keyframeCounts")
         if (individual_keyframes_count): 
