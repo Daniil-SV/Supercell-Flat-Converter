@@ -315,6 +315,7 @@ class SupercellOdinGLTF:
                 return np.array_split(animation_transform_array[node_index][frame_index], [3, 7])
                 
             get_transform_function = get_transform_from_raw_array
+            
         # Packed nodes
         else:
             packed = animation.get("packed")
@@ -344,7 +345,7 @@ class SupercellOdinGLTF:
                 frame_count = node.get("frameCount")
                 node_base_data_offset = node_index * node_base_data_stride
 
-                has_timestamp = flags & 1 != 0
+                has_frametime = flags & 1 != 0
                 has_rotation = flags & 2 != 0
                 has_translation = flags & 4 != 0
                 has_scale = flags & 8 != 0
@@ -373,10 +374,8 @@ class SupercellOdinGLTF:
                 ]
                 
                 # Multiply values for translation and scale data
-                transform_scale = (
-                    float(node_base_data[node_base_data_offset + 10]), 
-                    float(node_base_data[node_base_data_offset + 11])
-                )
+                translation_multiplier = node_base_data[node_base_data_offset + 10]
+                scale_multiplier = node_base_data[node_base_data_offset + 11]
                 
                 # Normalized
                 node_norm_rotation = [
@@ -412,21 +411,21 @@ class SupercellOdinGLTF:
 
                 # Step 1. Extracting normalized values from dataAccessor
                 for frame_index in range(frame_count):
-                    if (has_timestamp):
-                        # Skip for now. Idk why it exist at all
-                        value = normalized_transform_data[transform_index]
+                    if (has_frametime):
+                        # Skip for now. Idk why it exist at all. Maybe for compatibility with gltf animations
+                        frametime = normalized_transform_data[transform_index]
                         transform_index += 1
-                        
-                    if (has_translation):
-                        for i in range(translation_channels):
-                             node_norm_translation[i][frame_index] = normalized_transform_data[transform_index]
-                             transform_index += 1
-
+                    
                     if (has_rotation):
                         for i in range(rotation_channels):
                              node_norm_rotation[i][frame_index] = normalized_transform_data[transform_index]
                              transform_index += 1
                     
+                    if (has_translation):
+                        for i in range(translation_channels):
+                             node_norm_translation[i][frame_index] = normalized_transform_data[transform_index]
+                             transform_index += 1
+
                     if (has_scale):
                         for i in range(scale_channels):
                              node_norm_scale[i][frame_index] = normalized_transform_data[transform_index]
@@ -437,9 +436,8 @@ class SupercellOdinGLTF:
                 for frame_index in range(frame_count):
                     for i in range(translation_channels):
                         value = float(node_base_translation[i])
-                        scale, _ = transform_scale
                         if has_translation:
-                            transform = float(node_norm_translation[i][frame_index]) * scale
+                            transform = float(node_norm_translation[i][frame_index]) * translation_multiplier
                             value += transform
                         
                         node_translation[i][frame_index] = value
@@ -453,9 +451,8 @@ class SupercellOdinGLTF:
                         
                     for i in range(scale_channels):
                         value = float(node_base_scale[i])
-                        _, scale = transform_scale
                         if has_scale:
-                            transform = float(node_norm_scale[i][frame_index]) * scale
+                            transform = float(node_norm_scale[i][frame_index]) * scale_multiplier
                             value += transform
                         
                         node_scale[i][frame_index] = value
@@ -477,7 +474,6 @@ class SupercellOdinGLTF:
             
             get_transform_function = get_transform_from_packed_array
         
-        #return
         # Animation input
         animation_input_index = None
         individual_input_index = None
