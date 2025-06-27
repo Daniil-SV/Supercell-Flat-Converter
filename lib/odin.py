@@ -339,7 +339,9 @@ class SupercellOdinGLTF:
             translation_channels = 3
             scale_channels = 3
             node_base_data_stride = 12
-
+            
+            #elements_counter = 0
+            
             for node_index, node in enumerate(nodes):
                 flags = node.get("flags") or 0xFF
                 frame_count = node.get("frameCount")
@@ -348,8 +350,17 @@ class SupercellOdinGLTF:
                 has_frametime = flags & 1 != 0
                 has_rotation = flags & 2 != 0
                 has_translation = flags & 4 != 0
-                has_scale = flags & 8 != 0
-                unk_setting = flags & 16 != 0
+                has_single_scale = flags & 8 != 0
+                has_scale = flags & 16 != 0
+                
+                #node_elements_counter = 0
+                #if (has_frametime): node_elements_counter += 1
+                #if (has_rotation): node_elements_counter += 4
+                #if (has_translation): node_elements_counter += 3
+                #if (has_single_scale): node_elements_counter += 1
+                #if (has_scale): node_elements_counter += 2
+                #
+                #elements_counter += node_elements_counter * frame_count
 
                 # Allocating memory buffers
                 
@@ -425,9 +436,14 @@ class SupercellOdinGLTF:
                         for i in range(translation_channels):
                              node_norm_translation[i][frame_index] = normalized_transform_data[transform_index]
                              transform_index += 1
-
-                    if (has_scale):
+   
+                    if (has_single_scale):
                         for i in range(scale_channels):
+                             node_norm_scale[i][frame_index] = normalized_transform_data[transform_index]
+                        transform_index += 1
+                        
+                    if (has_scale):
+                        for i in range(1, scale_channels):
                              node_norm_scale[i][frame_index] = normalized_transform_data[transform_index]
                              transform_index += 1
 
@@ -464,6 +480,8 @@ class SupercellOdinGLTF:
                         node_scale
                     )
                 )
+            
+            #print (elements_counter)
             
             def get_transform_from_packed_array(node_index, frame_index):
                 translation, rotation, scale = transform_buffer[node_index]
