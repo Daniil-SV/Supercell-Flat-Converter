@@ -324,7 +324,7 @@ class SupercellOdinGLTF:
             node_accessor_idx = packed.get("nodeAccessor")
             individual_keyframes_count = [node.get("frameCount") or 1 for node in nodes]
 
-            used_nodes = [node.get("nodeIndex") or 1 for node in nodes]
+            used_nodes = [node.get("nodeIndex") or 0 for node in nodes]
             
             # Base transform values
             node_base_data = self.decode_accessor_obj(self.json["accessors"][node_accessor_idx])
