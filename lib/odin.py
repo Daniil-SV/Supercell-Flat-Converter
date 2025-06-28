@@ -418,7 +418,7 @@ class SupercellOdinGLTF:
                 ]
 
                 node_scale = [
-                        np.fill((frame_count), 1, dtype=np.float32)
+                        np.full((frame_count), 1, dtype=np.float32)
                         for _ in range(scale_channels)
                 ]
 
