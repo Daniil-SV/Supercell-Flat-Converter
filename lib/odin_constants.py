@@ -31,6 +31,7 @@ class OdinAttributeType(IntEnum):
             OdinAttributeType.a_uv1: 'TEXCOORD_1',
             OdinAttributeType.a_color: 'COLOR_0',
             OdinAttributeType.a_color1: 'COLOR_1',
+            OdinAttributeType.a_tangent: "TANGENT"
             #OdinAttributeType.a_colorAdd: 'COLOR_1',
             #OdinAttributeType.a_colorMul: 'COLOR_2',
         }[component_type]
