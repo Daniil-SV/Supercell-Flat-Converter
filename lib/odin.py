@@ -3,6 +3,7 @@ from binary_reader import BinaryReader
 from lib.gltf_constants import DataType, ComponentType
 from lib.odin_attribute import OdinAttribute
 from lib.odin_constants import OdinAttributeFormat, OdinAttributeType
+from lib.animation_flags import OdinAnimationFlags
 import numpy as np
 import json
 
@@ -341,28 +342,24 @@ class SupercellOdinGLTF:
             node_base_data_stride = 12
             
             #elements_counter = 0
+            frame_elements_stride = 0
+            node_elements_counter = 0
             
+            node_flags = [OdinAnimationFlags(node.get("flags") or 0) for node in nodes]
+            
+            frametime = [animation.has_frametime for animation in node_flags]
+            if (True in frametime and False in frametime):
+                raise Exception("Looks like this animation file uses mixed way of using frametime which is not supported")
+            
+            elif (True not in frametime):
+                frame_elements_stride = sum([animation.elements_count for animation in node_flags])
+
             for node_index, node in enumerate(nodes):
-                flags = node.get("flags") or 0xFF
+                animation: OdinAnimationFlags = node_flags[node_index]
                 frame_count = node.get("frameCount")
                 node_base_data_offset = node_index * node_base_data_stride
-
-                has_frametime = flags & 1 != 0
-                has_rotation = flags & 2 != 0
-                has_translation = flags & 4 != 0
-                has_single_scale = flags & 8 != 0
-                has_scale = flags & 16 != 0
                 
-                #node_elements_counter = 0
-                #if (has_frametime): node_elements_counter += 1
-                #if (has_rotation): node_elements_counter += 4
-                #if (has_translation): node_elements_counter += 3
-                #if (has_single_scale and has_scale):
-                #    node_elements_counter += 3
-                #elif (has_single_scale):
-                #    node_elements_counter += 1
-
-                #elements_counter += node_elements_counter * frame_count
+                #elements_counter += animation.elements_count * frame_count
 
                 # Allocating memory buffers
                 
@@ -424,26 +421,29 @@ class SupercellOdinGLTF:
 
                 # Step 1. Extracting normalized values from dataAccessor
                 for frame_index in range(frame_count):
-                    if (has_frametime):
+                    if (not animation.has_frametime):
+                        transform_index = (frame_elements_stride * frame_index) + node_elements_counter
+                    
+                    if (animation.has_frametime):
                         # Skip for now. Idk why it exist at all. Maybe for compatibility with gltf animations
                         frametime = normalized_transform_data[transform_index]
                         transform_index += 1
                     
-                    if (has_rotation):
+                    if (animation.has_rotation):
                         for i in range(rotation_channels):
                              node_norm_rotation[i][frame_index] = normalized_transform_data[transform_index]
                              transform_index += 1
                     
-                    if (has_translation):
+                    if (animation.has_translation):
                         for i in range(translation_channels):
                              node_norm_translation[i][frame_index] = normalized_transform_data[transform_index]
                              transform_index += 1
 
-                    if (has_single_scale and has_scale):
+                    if (animation.has_scale and animation.has_separate_scale):
                         for i in range(scale_channels):
                             node_norm_scale[i][frame_index] = normalized_transform_data[transform_index]
                             transform_index += 1
-                    elif (has_single_scale):
+                    elif (animation.has_scale):
                         for i in range(scale_channels):
                              node_norm_scale[i][frame_index] = normalized_transform_data[transform_index]
                         transform_index += 1
@@ -452,7 +452,7 @@ class SupercellOdinGLTF:
                 for frame_index in range(frame_count):
                     for i in range(translation_channels):
                         value = float(node_base_translation[i])
-                        if has_translation:
+                        if animation.has_translation:
                             transform = float(node_norm_translation[i][frame_index]) * translation_multiplier
                             value += transform
                         
@@ -460,14 +460,14 @@ class SupercellOdinGLTF:
                         
                     for i in range(rotation_channels):
                         value = float(node_base_rotation[i])
-                        if has_rotation:
+                        if animation.has_rotation:
                             value = float(node_norm_rotation[i][frame_index]) / 32767
                         
                         node_rotation[i][frame_index] = value
                         
                     for i in range(scale_channels):
                         value = float(node_base_scale[i])
-                        if has_scale or has_single_scale:
+                        if animation.has_scale or animation.has_separate_scale:
                             transform = float(node_norm_scale[i][frame_index]) * scale_multiplier
                             value += transform
                         
@@ -480,6 +480,8 @@ class SupercellOdinGLTF:
                         node_scale
                     )
                 )
+                
+                node_elements_counter += animation.elements_count
             
             #print (elements_counter)
             

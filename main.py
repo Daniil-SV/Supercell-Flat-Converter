@@ -21,6 +21,7 @@ def decode(post_process: bool):
     files = os.scandir(required_folders["sc_input"])
 
     for filepath in files:
+        print(f"Working on \"{filepath.name}\"", end='')
         gltf = glTF()
 
         try:
@@ -50,7 +51,7 @@ def decode(post_process: bool):
 
                 break
 
-        print(f"Successful: {filepath.name}")
+        print(f"\rSuccessful: \"{filepath.name}\"")
 
         with open(os.path.join(required_folders["def_output"], filepath.name), "wb") as file:
             file.write(gltf.write())
