@@ -62,6 +62,10 @@ class SupercellOdinGLTF:
         self.process_skins()
         self.process_nodes()
         
+        scene = self.json.get("scenes")
+        if (scene is None or len(scene) == 0 or scene[0].get("nodes") is None):
+            self.create_scene()
+        
         extensions_required: list[str] = self.json.get("extensionsRequired", [])
         extensions_used: list[str] = self.json.get("extensionsUsed", [])
         
@@ -747,8 +751,19 @@ class SupercellOdinGLTF:
         self.json["bufferViews"] = bufferView
         
         return bytes(stream.buffer())
-        
     
+    def create_scene(self) -> None:
+        # looking for root nodes
+        nodes: list[dict] = self.json.get("nodes", [])
+        childrens = set()
+        for node in nodes:
+            childrens.update(node.get("children", []))
+        
+        root_nodes = [i for i in range(len(nodes)) if i not in childrens]
+        self.json["scenes"] = [{
+            "nodes": root_nodes
+        }]
+
     def produce_buffers(self, data: bytes) -> None:
         if "buffers" not in self.json:
             return
