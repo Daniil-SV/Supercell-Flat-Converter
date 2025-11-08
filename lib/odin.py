@@ -121,7 +121,6 @@ class SupercellOdinGLTF:
             else:
                 mesh.pop("primitives")
 
-
     def process_nodes(self) -> None:
         nodes: list[dict] = self.json.get("nodes", [])
         
@@ -183,9 +182,7 @@ class SupercellOdinGLTF:
             for descriptor in vertex_descriptors:
                 self.process_odin_primitive_descriptor(descriptor, attributes, vertex_count[idx])
                 
-            self.cached_mesh_descriptors[idx] = attributes
-                
-                
+            self.cached_mesh_descriptors[idx] = attributes     
             
     def process_meshes(self) -> None:
         meshes: list[dict] = self.json.get("meshes", [])
@@ -327,8 +324,8 @@ class SupercellOdinGLTF:
             nodes = packed.get("nodes")
             data_accessor_idx = packed.get("dataAccessor")
             node_accessor_idx = packed.get("nodeAccessor")
+            rotation_accessor_idx = packed.get("uintAccessor")
             individual_keyframes_count = [node.get("frameCount") or 1 for node in nodes]
-
             used_nodes = [node.get("nodeIndex") or 0 for node in nodes]
             
             # Base transform values
@@ -337,17 +334,24 @@ class SupercellOdinGLTF:
             # Normalized transform values
             normalized_transform_data = self.decode_accessor_obj(self.json["accessors"][data_accessor_idx])
             transform_index = 0
+            
+            rotation_data = None
+            rotation_data_counter = 0
+            if (rotation_accessor_idx is not None):
+                rotation_data = self.decode_accessor_obj(self.json["accessors"][rotation_accessor_idx])
 
             transform_buffer = []
             
             rotation_channels = 4
             translation_channels = 3
             scale_channels = 3
-            node_base_data_stride = 12
+            if (rotation_accessor_idx is not None):
+                node_base_data_stride = 8
+            else:
+                node_base_data_stride = 12
             
-            #elements_counter = 0
-            frame_elements_stride = 0
             node_elements_counter = 0
+            frame_elements_stride = 0
             
             node_flags = [OdinAnimationFlags(node.get("flags") or 0) for node in nodes]
             
@@ -361,51 +365,62 @@ class SupercellOdinGLTF:
             for node_index, node in enumerate(nodes):
                 animation: OdinAnimationFlags = node_flags[node_index]
                 frame_count = node.get("frameCount")
+                data_size = node.get("dataSize")
                 node_base_data_offset = node_index * node_base_data_stride
-                
-                #elements_counter += animation.elements_count * frame_count
+                local_node_elements_counter = 0
+                unk_value = None
 
                 # Allocating memory buffers
+                local_node_offset = 0
+                
+                def get_base_value():
+                    nonlocal local_node_offset
+                    idx = node_base_data_offset + local_node_offset
+                    local_node_offset += 1
+                    return node_base_data[idx]
                 
                 # Base values
                 node_base_translation = [
-                    node_base_data[node_base_data_offset],
-                    node_base_data[node_base_data_offset + 1],
-                    node_base_data[node_base_data_offset + 2]
+                    get_base_value()
+                        for _ in range(translation_channels)
                 ]
                 
-                node_base_rotation = [
-                    node_base_data[node_base_data_offset + 3],
-                    node_base_data[node_base_data_offset + 4],
-                    node_base_data[node_base_data_offset + 5],
-                    node_base_data[node_base_data_offset + 6],
-                ]
+                if (rotation_data is not None):
+                    node_base_rotation = [
+                        rotation_data[rotation_data_counter + i] 
+                            for i in range(rotation_channels)
+                    ]
+                    rotation_data_counter += rotation_channels
+                else:
+                    node_base_rotation = [
+                        get_base_value()
+                            for _ in range(rotation_channels)
+                    ]
                 
                 node_base_scale = [
-                    node_base_data[node_base_data_offset + 7],
-                    node_base_data[node_base_data_offset + 8],
-                    node_base_data[node_base_data_offset + 9]
+                    get_base_value()
+                        for _ in range(scale_channels)
                 ]
                 
                 # Multiply values for translation and scale data
-                translation_multiplier = node_base_data[node_base_data_offset + 10]
-                scale_multiplier = node_base_data[node_base_data_offset + 11]
+                translation_multiplier = get_base_value()
+                scale_multiplier = get_base_value()
                 
                 # Normalized
                 node_norm_rotation = [
                         np.zeros((frame_count), dtype=np.int16)
                         for _ in range(rotation_channels)
-                ]
+                ] if animation.has_rotation else None
                 
                 node_norm_translation = [
                         np.zeros((frame_count), dtype=np.int16)
                         for _ in range(translation_channels)
-                ]
+                ] if animation.has_translation else None
 
                 node_norm_scale = [
                         np.zeros((frame_count), dtype=np.int16)
                         for _ in range(scale_channels)
-                ]
+                ] if (animation.has_scale or animation.has_separate_scale) else None
                 
                 # Final (Raw)
                 node_rotation = [
@@ -422,35 +437,48 @@ class SupercellOdinGLTF:
                         np.full((frame_count), 1, dtype=np.float32)
                         for _ in range(scale_channels)
                 ]
+                
+                def get_norm_value() -> int | float:
+                    nonlocal transform_index
+                    
+                    if (data_size is not None):
+                        if (local_node_elements_counter >= data_size):
+                            raise Exception("Transform index exceeded data size limit")
 
+                    result = normalized_transform_data[transform_index]
+                    transform_index += 1
+                    return result
+                
                 # Step 1. Extracting normalized values from dataAccessor
                 for frame_index in range(frame_count):
-                    if (not animation.has_frametime):
-                        transform_index = (frame_elements_stride * frame_index) + node_elements_counter
+                    if (frame_index == 0 and data_size is not None and animation.flags != 0):
+                        # TODO: Important some kind of flag(?)
+                        unk_value = get_norm_value()
                     
+                    elif (not animation.has_frametime and data_size is None):
+                        transform_index = (frame_elements_stride * frame_index) + node_elements_counter
+
                     if (animation.has_frametime):
                         # Skip for now. Idk why it exist at all. Maybe for compatibility with gltf animations
-                        frametime = normalized_transform_data[transform_index]
-                        transform_index += 1
-                    
+                        frametime = get_norm_value()
+
                     if (animation.has_rotation):
                         for i in range(rotation_channels):
-                             node_norm_rotation[i][frame_index] = normalized_transform_data[transform_index]
-                             transform_index += 1
+                             node_norm_rotation[i][frame_index] = get_norm_value()
                     
                     if (animation.has_translation):
                         for i in range(translation_channels):
-                             node_norm_translation[i][frame_index] = normalized_transform_data[transform_index]
-                             transform_index += 1
+                             node_norm_translation[i][frame_index] = get_norm_value()
 
                     if (animation.has_scale and animation.has_separate_scale):
                         for i in range(scale_channels):
-                            node_norm_scale[i][frame_index] = normalized_transform_data[transform_index]
-                            transform_index += 1
+                            node_norm_scale[i][frame_index] = get_norm_value()
                     elif (animation.has_scale):
+                        scale = get_norm_value()
                         for i in range(scale_channels):
-                             node_norm_scale[i][frame_index] = normalized_transform_data[transform_index]
-                        transform_index += 1
+                             node_norm_scale[i][frame_index] = scale
+                             
+                    local_node_elements_counter += animation.elements_count
                 
                 # Step 2. Denormalizing values and filling buffers with values in raw view
                 for frame_index in range(frame_count):
@@ -486,8 +514,6 @@ class SupercellOdinGLTF:
                 )
                 
                 node_elements_counter += animation.elements_count
-            
-            #print (elements_counter)
             
             def get_transform_from_packed_array(node_index, frame_index):
                 translation, rotation, scale = transform_buffer[node_index]
