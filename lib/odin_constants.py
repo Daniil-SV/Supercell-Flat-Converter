@@ -19,7 +19,7 @@ class OdinAttributeType(IntEnum):
     a_binormal = 13
     a_skinningOffsets = 14
     a_color1 = 15
-    
+
     @classmethod
     def to_attribute_name(cls, component_type) -> str:
         return {
@@ -32,8 +32,8 @@ class OdinAttributeType(IntEnum):
             OdinAttributeType.a_color: 'COLOR_0',
             OdinAttributeType.a_color1: 'COLOR_1',
             OdinAttributeType.a_tangent: "TANGENT"
-            #OdinAttributeType.a_colorAdd: 'COLOR_1',
-            #OdinAttributeType.a_colorMul: 'COLOR_2',
+            # OdinAttributeType.a_colorAdd: 'COLOR_1',
+            # OdinAttributeType.a_colorMul: 'COLOR_2',
         }[component_type]
 
 
@@ -44,7 +44,7 @@ class OdinAttributeFormat(IntEnum):
     FloatVector2 = 29
     FloatVector3 = 30
     NormalizedWeightVector = 36
-    
+
     @classmethod
     def is_normalized(cls, component_type) -> bool:
         return {
@@ -55,7 +55,7 @@ class OdinAttributeFormat(IntEnum):
             OdinAttributeFormat.FloatVector2: False,
             OdinAttributeFormat.ColorRGBA: True,
         }[component_type]
-    
+
     @classmethod
     def to_accessor_type(cls, component_type) -> str:
         return {
@@ -66,7 +66,7 @@ class OdinAttributeFormat(IntEnum):
             OdinAttributeFormat.FloatVector2: 'VEC2',
             OdinAttributeFormat.ColorRGBA: 'VEC4',
         }[component_type]
-    
+
     @classmethod
     def to_accessor_component(cls, component_type) -> int:
         return {
@@ -77,7 +77,7 @@ class OdinAttributeFormat(IntEnum):
             OdinAttributeFormat.FloatVector2: 5126,
             OdinAttributeFormat.ColorRGBA: 5121,
         }[component_type]
-        
+
     @classmethod
     def to_numpy_dtype(cls, component_type):
         return {
@@ -88,7 +88,7 @@ class OdinAttributeFormat(IntEnum):
             OdinAttributeFormat.FloatVector2: np.float32,
             OdinAttributeFormat.ColorRGBA: np.ubyte,
         }[component_type]
-        
+
     @classmethod
     def to_element_count(cls, component_type) -> int:
         return {

@@ -13,9 +13,10 @@ required_folders = {
     "def_output": "Out-glTF",
 }
 
-if (debug): 
+if (debug):
     required_folders["in_debug"] = "In-Debug"
     required_folders["out_debug"] = "Out-Debug"
+
 
 def decode(post_process: bool):
     files = os.scandir(required_folders["sc_input"])
@@ -41,13 +42,16 @@ def decode(post_process: bool):
 
         if debug:
             for chunk in gltf.chunks:
-                if chunk.name != "JSON": continue
-                
-                file = open(os.path.join(required_folders["out_debug"], filepath.name) + ".json", "wb")
+                if chunk.name != "JSON":
+                    continue
+
+                file = open(os.path.join(
+                    required_folders["out_debug"], filepath.name) + ".json", "wb")
                 if (isinstance(chunk.data, bytes)):
                     file.write(chunk.data)
                 else:
-                    file.write(bytes(json.dumps(chunk.data, cls=ObjectProcessor, indent=4), "utf8"))
+                    file.write(
+                        bytes(json.dumps(chunk.data, cls=ObjectProcessor, indent=4), "utf8"))
 
                 break
 
@@ -55,6 +59,7 @@ def decode(post_process: bool):
 
         with open(os.path.join(required_folders["def_output"], filepath.name), "wb") as file:
             file.write(gltf.write())
+
 
 def encode():
     files = os.scandir(required_folders["def_input"])
@@ -84,16 +89,18 @@ def encode():
         with open(os.path.join(required_folders["sc_output"], filepath.name), "wb") as file:
             file.write(gltf.write())
 
+
 if __name__ == "__main__":
     for name in required_folders.values():
         os.makedirs(name, exist_ok=True)
-        
+
     parser = argparse.ArgumentParser(
         prog="scglTF Converter", description="Tool for converting Supercell glTF files to usual ones and vice versa"
     )
-    
-    parser.add_argument("mode", type=str, choices=["decode", "decodeRaw", "encode"])
-    
+
+    parser.add_argument("mode", type=str, choices=[
+                        "decode", "decodeRaw", "encode"])
+
     args = parser.parse_args()
     if (args.mode == "decode"):
         decode(post_process=True)
