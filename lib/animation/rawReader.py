@@ -26,5 +26,5 @@ class OdinRawAnimationReader(OdinAnimationReader):
         else:
             self.data = np.reshape(self.buffer, (len(self.used_nodes), self.keyframe_count, frame_transform_length))
     
-    def getFrameData(self, node_index: int, frame_index: int):        
+    def get_frame_data(self, node_index: int, frame_index: int):        
         return np.array_split(self.data[node_index][frame_index], [3, 7])

@@ -204,7 +204,7 @@ class OdinPackedReader(OdinAnimationReader):
         for i in range(len(self.nodes)):
             self.process_node(i)
 
-    def getFrameData(self, node_index: int, frame_index: int) -> Tuple[list, list, list]:
+    def get_frame_data(self, node_index: int, frame_index: int) -> Tuple[list, list, list]:
         translation, rotation, scale = self.data[node_index]
 
         return ([channel[frame_index] for channel in translation],

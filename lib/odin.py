@@ -98,7 +98,8 @@ class SupercellOdinGLTF:
             accessor["componentType"] = component & 0x0000FFFF
 
     def process_meshes_raw(self) -> None:
-        meshes: list[dict] = self.json.get("meshes", [])
+        # Fix missing meshes field which is required in glTF spec
+        meshes = self.json["meshes"] = self.json.get("meshes", [])
 
         for mesh in meshes:
             primitives: dict = mesh.get("primitives")
@@ -356,7 +357,7 @@ class SupercellOdinGLTF:
 
             for frame_index in range(node_keyframes):
                 translation, rotation, scale = animation_transform_buffers[node_index]
-                t, r, s = animation.getFrameData(node_index, frame_index)
+                t, r, s = animation.get_frame_data(node_index, frame_index)
 
                 for value in t:
                     translation.write_float(value)

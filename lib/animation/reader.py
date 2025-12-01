@@ -13,7 +13,7 @@ class OdinAnimationReader:
         """Reads buffer data"""        
         raise NotImplementedError()
     
-    def getFrameData(node_index: int, frame_index: int) -> Tuple[list, list, list]:
+    def get_frame_data(node_index: int, frame_index: int) -> Tuple[list, list, list]:
         """Returns frame data for specific node in format (Translation, Rotation, Scale)"""        
         raise NotImplementedError()
         
