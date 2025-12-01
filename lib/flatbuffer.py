@@ -285,7 +285,7 @@ def pascal_case(value: str):
     return value[0].upper() + value[1:]
 
 
-def preprocess_data(data: any):
+def preprocess_data(data: any, clean: bool = False) -> any:
     """
     The `preprocess_data` function takes in any data and applies specific preprocessing steps based on
     the data type.
@@ -295,7 +295,7 @@ def preprocess_data(data: any):
     :return: Preprocessed data
     """
     if isinstance(data, list):
-        if len(data) == 0:
+        if clean and len(data) == 0:
             return None
         return preprocess_list(data)
     elif isinstance(data, dict):
@@ -383,8 +383,11 @@ def deserialize_array(buffer: any, key: str, schema: any) -> list:
 
     # Structs | strings
     elif isinstance(schema, dict) or schema == str:
-        result = []
         object_number = getattr(buffer, f"{key}Length")()
+        if (object_number == 0):
+            return None
+
+        result = []
         for i in range(object_number):
             object_buffer = getattr(buffer, key)(i)
             if (schema == str):
@@ -395,10 +398,13 @@ def deserialize_array(buffer: any, key: str, schema: any) -> list:
         return result
 
 
-def deserialize_flatbuffer(buffer: any, schema: dict) -> dict:
+def deserialize_flatbuffer(buffer: any, schema: dict, clean: bool = False) -> dict:
     result = OrderedDict()
 
     for key, value in schema.items():
+        if (key.startswith("_")):
+            continue
+        
         getter_key = pascal_case(key)
         value_type = value
         default_value = None
@@ -439,26 +445,33 @@ def deserialize_flatbuffer(buffer: any, schema: dict) -> dict:
             if (enum_value == default_value): continue
             value_data = value_type(enum_value).name
         
+        if (clean and value_data is None):
+            continue
+        
         if (default_value != value_data):
             result[key] = value_data if value_data is not None else default_value
 
     return result
 
 
-def deserialize_glb_json(data: bytes) -> dict:
+def deserialize_glb_json(data: bytes, clean: bool = False) -> dict:
     """
     The function takes bytes of glTF FLA2 chunk data and returns a dictionary
     containing the deserialized JSON data.
 
     :param data: A bytes that represents glTF FLA2 chunk data
+    :param clean: Returns cleaned data without empty arrays and default values
     :type data: bytes
     :return: JSON data in python dict that can be used for serialization to usual json or using in python
     """
     flatbuffer = flat.Root.GetRootAs(bytearray(data))
 
-    output = deserialize_flatbuffer(flatbuffer, gltf_schema)
+    output = deserialize_flatbuffer(flatbuffer, gltf_schema, clean)
+    asset_info = output.get("asset", {"version": "2.0"})
+    asset_info["generator"] = "Supercell glTF Converter by DaniilSV"
+    output["asset"] = asset_info
 
-    return preprocess_data(output)
+    return preprocess_data(output, clean)
 
 
 #! ---------------- Serializing ----------------
