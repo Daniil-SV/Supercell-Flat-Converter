@@ -201,6 +201,8 @@ class OdinPackedReader(OdinAnimationReader):
         return self.node_base_data[idx]
 
     def read(self):
+        self.keyframe_mapping = [node.get("frameCount") for node in self.nodes]
+        
         for i in range(len(self.nodes)):
             self.process_node(i)
 
