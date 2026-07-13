@@ -67,7 +67,8 @@ class OdinPackedReader(OdinAnimationReader):
 
         # Step 2. Denormalizing values and filling buffers with values in raw view
         translation, rotation, scale = self.denormalize_transforms(
-            total_frame_count, flags, (translation_multiplier, scale_multiplier, ),
+            total_frame_count, flags, (translation_multiplier,
+                                       scale_multiplier, ),
             bTranslation, bRotation, bScale,
             nTranslation, nRotation, nScale
         )
@@ -202,7 +203,7 @@ class OdinPackedReader(OdinAnimationReader):
 
     def read(self):
         self.keyframe_mapping = [node.get("frameCount") for node in self.nodes]
-        
+
         for i in range(len(self.nodes)):
             self.process_node(i)
 
